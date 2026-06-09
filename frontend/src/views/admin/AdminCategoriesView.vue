@@ -3,7 +3,7 @@
     <section class="panel stack">
       <div class="section-header">
         <div>
-          <h1>分类管理</h1>
+          <h1 class="section-title">分类管理</h1>
           <p class="muted">维护前台筛选使用的商品分类</p>
         </div>
         <button type="button" @click="resetForm">新增分类</button>
@@ -35,35 +35,41 @@
         </div>
       </form>
 
-      <p v-if="message" :class="{ error: failed }">{{ message }}</p>
+      <p v-if="message" :class="failed ? 'error' : 'success'">{{ message }}</p>
 
-      <table class="list-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>名称</th>
-            <th>父级</th>
-            <th>排序</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="category in categories" :key="category.id">
-            <td>{{ category.id }}</td>
-            <td>{{ category.name }}</td>
-            <td>{{ category.parentId || '-' }}</td>
-            <td>{{ category.sortOrder }}</td>
-            <td>{{ category.enabled ? '启用' : '禁用' }}</td>
-            <td>
-              <div class="actions">
-                <button type="button" @click="edit(category)">编辑</button>
-                <button v-if="category.enabled" type="button" @click="disable(category.id)">禁用</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>父级</th>
+              <th>排序</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="category in categories" :key="category.id">
+              <td>{{ category.id }}</td>
+              <td>{{ category.name }}</td>
+              <td>{{ category.parentId || '-' }}</td>
+              <td>{{ category.sortOrder }}</td>
+              <td>
+                <span class="status-pill" :class="category.enabled ? 'is-live' : 'is-off'">
+                  {{ category.enabled ? '启用' : '禁用' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button type="button" @click="edit(category)">编辑</button>
+                  <button v-if="category.enabled" type="button" @click="disable(category.id)">禁用</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </AdminLayout>
 </template>

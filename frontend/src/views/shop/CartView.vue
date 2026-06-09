@@ -1,43 +1,55 @@
 <template>
   <section class="panel stack">
-    <h1>购物车</h1>
-    <table v-if="cart.items.length" class="list-table">
-      <thead>
-        <tr>
-          <th>商品</th>
-          <th>数量</th>
-          <th>小计</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in cart.items" :key="item.id">
-          <td>
-            <div class="cart-product">
-              <img v-if="products[item.productId]?.imageUrl" :src="products[item.productId].imageUrl" :alt="products[item.productId].name" />
-              <div>
-                <strong>{{ products[item.productId]?.name || `商品 #${item.productId}` }}</strong>
-                <p class="muted">{{ products[item.productId]?.brand || '加载中' }}</p>
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">购物车</h1>
+        <p class="muted">确认数量后可以继续结算。</p>
+      </div>
+      <strong class="price">¥{{ cartTotal }}</strong>
+    </div>
+    <div v-if="cart.items.length" class="table-wrap">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th>商品</th>
+            <th>数量</th>
+            <th>小计</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in cart.items" :key="item.id">
+            <td>
+              <div class="cart-product">
+                <img v-if="products[item.productId]?.imageUrl" :src="products[item.productId].imageUrl" :alt="products[item.productId].name" />
+                <div>
+                  <strong>{{ products[item.productId]?.name || `商品 #${item.productId}` }}</strong>
+                  <p class="muted">{{ products[item.productId]?.brand || '加载中' }}</p>
+                </div>
               </div>
-            </div>
-          </td>
-          <td>
-            <input v-model.number="item.quantity" type="number" min="1" @change="cart.update(item.id, item.quantity)" />
-          </td>
-          <td>¥{{ lineTotal(item) }}</td>
-          <td><button type="button" @click="cart.remove(item.id)">删除</button></td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-else class="muted">购物车是空的</p>
+            </td>
+            <td>
+              <input class="cart-quantity" v-model.number="item.quantity" type="number" min="1" @change="cart.update(item.id, item.quantity)" />
+            </td>
+            <td>¥{{ lineTotal(item) }}</td>
+            <td><button type="button" @click="cart.remove(item.id)">删除</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-else class="empty-state">
+      <h2>购物车是空的</h2>
+      <p class="muted">先挑几件商品，再回来结算。</p>
+      <RouterLink class="primary-button" to="/products">去逛商品</RouterLink>
+    </div>
     <div class="actions">
-      <RouterLink class="primary-button" to="/checkout">去结算</RouterLink>
+      <RouterLink v-if="cart.items.length" class="primary-button" to="/checkout">去结算</RouterLink>
     </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useCartStore } from '../../stores/cart'
 import { getProduct } from '../../api/products'
@@ -49,6 +61,8 @@ function lineTotal(item) {
   const price = Number(products.value[item.productId]?.price || 0)
   return price ? price * item.quantity : 0
 }
+
+const cartTotal = computed(() => cart.items.reduce((total, item) => total + lineTotal(item), 0))
 
 async function loadProducts(items) {
   const missingIds = [...new Set(items.map((item) => item.productId))]

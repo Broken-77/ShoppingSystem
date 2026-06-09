@@ -3,7 +3,7 @@
     <section class="panel stack">
       <div class="section-header">
         <div>
-          <h1>商品管理</h1>
+          <h1 class="section-title">商品管理</h1>
           <p class="muted">维护商品信息、库存和上下架状态</p>
         </div>
         <button type="button" @click="resetForm">新增商品</button>
@@ -56,45 +56,51 @@
         </div>
       </form>
 
-      <p v-if="message" :class="{ error: failed }">{{ message }}</p>
+      <p v-if="message" :class="failed ? 'error' : 'success'">{{ message }}</p>
 
-      <table class="list-table">
-        <thead>
-          <tr>
-            <th>商品</th>
-            <th>分类</th>
-            <th>价格</th>
-            <th>库存</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="product in products" :key="product.id">
-            <td>
-              <div class="cart-product">
-                <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
-                <div>
-                  <strong>{{ product.name }}</strong>
-                  <p class="muted">{{ product.brand || '无品牌' }}</p>
+      <div class="table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>商品</th>
+              <th>分类</th>
+              <th>价格</th>
+              <th>库存</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="product in products" :key="product.id">
+              <td>
+                <div class="cart-product">
+                  <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
+                  <div>
+                    <strong>{{ product.name }}</strong>
+                    <p class="muted">{{ product.brand || '无品牌' }}</p>
+                  </div>
                 </div>
-              </div>
-            </td>
-            <td>{{ categoryName(product.categoryId) }}</td>
-            <td>¥{{ product.price }}</td>
-            <td>{{ product.stock }}</td>
-            <td>{{ product.status === 'ON_SALE' ? '上架' : '下架' }}</td>
-            <td>
-              <div class="actions">
-                <button type="button" @click="edit(product)">编辑</button>
-                <button type="button" @click="toggleStatus(product)">
-                  {{ product.status === 'ON_SALE' ? '下架' : '上架' }}
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td>{{ categoryName(product.categoryId) }}</td>
+              <td>¥{{ product.price }}</td>
+              <td>{{ product.stock }}</td>
+              <td>
+                <span class="status-pill" :class="product.status === 'ON_SALE' ? 'is-live' : 'is-off'">
+                  {{ product.status === 'ON_SALE' ? '上架' : '下架' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button type="button" @click="edit(product)">编辑</button>
+                  <button type="button" @click="toggleStatus(product)">
+                    {{ product.status === 'ON_SALE' ? '下架' : '上架' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </AdminLayout>
 </template>

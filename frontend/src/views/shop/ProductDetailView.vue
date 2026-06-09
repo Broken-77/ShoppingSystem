@@ -1,15 +1,28 @@
 <template>
-  <section v-if="product" class="stack">
+  <section v-if="product" class="page-stack">
     <div class="panel detail-layout">
       <div class="detail-media">
         <img :src="product.imageUrl" :alt="product.name" />
       </div>
-      <div class="stack">
+      <div class="stack detail-copy">
         <h1>{{ product.name }}</h1>
         <p class="muted">{{ product.brand }}</p>
         <strong class="price">¥{{ product.price }}</strong>
         <p>{{ product.description }}</p>
-        <p class="muted">库存 {{ product.stock }} · 销量 {{ product.salesCount }}</p>
+        <div class="metric-strip">
+          <div class="metric">
+            <strong>{{ product.stock }}</strong>
+            <span class="muted">库存</span>
+          </div>
+          <div class="metric">
+            <strong>{{ product.salesCount }}</strong>
+            <span class="muted">销量</span>
+          </div>
+          <div class="metric">
+            <strong>{{ similar.length }}</strong>
+            <span class="muted">相似商品</span>
+          </div>
+        </div>
         <div class="actions">
           <label class="form-row">
             <span>数量</span>
@@ -17,12 +30,17 @@
           </label>
           <button class="primary-button" type="button" @click="addToCart">加入购物车</button>
         </div>
-        <p v-if="message" :class="{ error: failed }">{{ message }}</p>
+        <p v-if="message" :class="failed ? 'error' : 'success'">{{ message }}</p>
       </div>
     </div>
 
     <section class="panel stack">
-      <h2 class="section-title">相似商品</h2>
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">相似商品</h2>
+          <p class="muted">同分类和相似行为会影响展示结果。</p>
+        </div>
+      </div>
       <div class="grid">
         <ProductCard v-for="item in similar" :key="item.id" :product="item" />
       </div>

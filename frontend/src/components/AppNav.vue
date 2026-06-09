@@ -1,18 +1,23 @@
 <template>
   <header class="topbar">
     <div class="topbar-inner">
-      <RouterLink class="brand" to="/">Shopping System</RouterLink>
-      <nav class="nav-links">
+      <RouterLink class="brand" :to="auth.isAdmin ? '/admin/products' : '/'">
+        <span class="brand-mark">S</span>
+        <span>Shopping System</span>
+      </RouterLink>
+      <nav v-if="auth.isAdmin" class="nav-links">
+        <RouterLink to="/admin/products">后台管理</RouterLink>
+      </nav>
+      <nav v-else class="nav-links">
         <RouterLink to="/">首页</RouterLink>
         <RouterLink to="/products">商品</RouterLink>
-        <RouterLink to="/cart">购物车<span v-if="cart.count"> {{ cart.count }}</span></RouterLink>
+        <RouterLink to="/cart">购物车<span v-if="cart.count" class="cart-count">{{ cart.count }}</span></RouterLink>
         <RouterLink to="/orders">我的订单</RouterLink>
-        <RouterLink v-if="auth.isAdmin" to="/admin/products">后台</RouterLink>
       </nav>
       <div class="session">
-        <span v-if="auth.isLoggedIn">{{ auth.username }}</span>
+        <span v-if="auth.isLoggedIn" class="session-name">{{ auth.username }}</span>
         <button v-if="auth.isLoggedIn" type="button" @click="logout">退出</button>
-        <RouterLink v-else to="/login">登录</RouterLink>
+        <RouterLink v-else class="primary-button" to="/login">登录</RouterLink>
       </div>
     </div>
   </header>

@@ -1,11 +1,17 @@
 <template>
-  <section class="stack">
+  <section class="page-stack">
     <div class="panel stack">
-      <h1>商品</h1>
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">商品广场</h1>
+          <p class="muted">用关键词、分类和价格范围快速缩小选择。</p>
+        </div>
+        <span class="status-pill">{{ visibleProducts.length }} 件结果</span>
+      </div>
       <form class="toolbar" @submit.prevent="loadProducts">
         <label class="form-row">
           <span>关键词</span>
-          <input v-model="filters.keyword" placeholder="phone" />
+          <input v-model="filters.keyword" placeholder="输入商品名或品牌" />
         </label>
         <label class="form-row">
           <span>分类</span>
@@ -28,8 +34,12 @@
       </form>
     </div>
 
-    <div class="grid">
+    <div v-if="visibleProducts.length" class="grid">
       <ProductCard v-for="product in visibleProducts" :key="product.id" :product="product" />
+    </div>
+    <div v-else class="empty-state">
+      <h2>没有找到商品</h2>
+      <p class="muted">换个关键词或放宽价格范围再试一次。</p>
     </div>
   </section>
 </template>

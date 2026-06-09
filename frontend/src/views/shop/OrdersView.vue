@@ -1,32 +1,73 @@
 <template>
-  <section class="stack">
-    <h1>我的订单</h1>
+  <section class="page-stack">
+    <div class="panel section-header">
+      <div>
+        <h1 class="section-title">我的订单</h1>
+        <p class="muted">查看每一笔订单的商品、金额和支付状态。</p>
+      </div>
+      <span class="status-pill">{{ orders.length }} 笔订单</span>
+    </div>
     <article v-for="order in orders" :key="order.id" class="panel stack">
-      <strong>{{ order.orderNo }}</strong>
-      <p>金额 ¥{{ order.totalAmount }} · {{ order.status }}</p>
-      <p class="muted">创建 {{ formatTime(order.createdAt) }} <span v-if="order.paidAt">· 支付 {{ formatTime(order.paidAt) }}</span></p>
-      <table class="list-table">
-        <tbody>
-          <tr v-for="item in order.items" :key="item.id">
-            <td>{{ item.productName }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>¥{{ item.subtotal }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="section-header">
+        <div>
+          <strong>{{ order.orderNo }}</strong>
+          <p class="muted">创建 {{ formatTime(order.createdAt) }} <span v-if="order.paidAt"> 支付 {{ formatTime(order.paidAt) }}</span></p>
+        </div>
+        <div class="actions">
+          <strong class="price">¥{{ order.totalAmount }}</strong>
+          <span class="status-pill" :class="statusClass(order.status)">{{ statusLabel(order.status) }}</span>
+          <RouterLink class="secondary-button" :to="`/orders/${order.id}`">
+            {{ order.status === 'PENDING_PAYMENT' ? '去支付' : '查看详情' }}
+          </RouterLink>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="list-table">
+          <tbody>
+            <tr v-for="item in order.items" :key="item.id">
+              <td>{{ item.productName }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>¥{{ item.subtotal }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </article>
-    <p v-if="!orders.length" class="muted">暂无订单</p>
+    <div v-if="!orders.length" class="empty-state">
+      <h2>暂无订单</h2>
+      <p class="muted">完成一次结算后，订单会出现在这里。</p>
+      <RouterLink class="primary-button" to="/products">去逛商品</RouterLink>
+    </div>
   </section>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { listOrders } from '../../api/orders'
 
 const orders = ref([])
 
 function formatTime(value) {
   return value ? new Date(value).toLocaleString() : ''
+}
+
+function statusClass(status) {
+  return {
+    'is-paid': status === 'PAID',
+    'is-finished': status === 'FINISHED',
+    'is-cancelled': status === 'CANCELLED'
+  }
+}
+
+function statusLabel(status) {
+  const labels = {
+    PENDING_PAYMENT: '待支付',
+    PAID: '已支付',
+    CANCELLED: '已取消',
+    FINISHED: '已完成'
+  }
+  return labels[status] || status
 }
 
 onMounted(async () => {
