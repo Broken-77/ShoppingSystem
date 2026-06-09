@@ -1,16 +1,15 @@
 package com.wms.shoppingsys.service;
 
 import com.wms.shoppingsys.entity.Product;
+import com.wms.shoppingsys.entity.UserBehavior;
 import com.wms.shoppingsys.repository.ProductRepository;
-import com.wms.shoppingsys.service.ProductService;
+import com.wms.shoppingsys.repository.UserBehaviorRepository;
 import com.wms.shoppingsys.enums.ProductStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -19,17 +18,21 @@ public class RecommendationService {
     private final RecommendationEngine recommendationEngine;
     private final ProductRepository productRepository;
     private final ProductService productService;
+    private final UserBehaviorRepository behaviorRepository;
 
     public RecommendationService(RecommendationEngine recommendationEngine, ProductRepository productRepository,
-                                 ProductService productService) {
+                                 ProductService productService, UserBehaviorRepository behaviorRepository) {
         this.recommendationEngine = recommendationEngine;
         this.productRepository = productRepository;
         this.productService = productService;
+        this.behaviorRepository = behaviorRepository;
     }
 
     @Transactional(readOnly = true)
     public List<Product> homeRecommendations(Long userId) {
-        return fillWithFallback(toProducts(recommendationEngine.recommendProductIds(userId, DEFAULT_LIMIT)));
+        List<Product> cfResults = toProducts(recommendationEngine.recommendProductIds(userId, DEFAULT_LIMIT));
+        List<Product> categoryHot = categoryHotProducts(userId);
+        return mergeProducts(cfResults, categoryHot, newProducts());
     }
 
     @Transactional(readOnly = true)
@@ -57,14 +60,42 @@ public class RecommendationService {
         return mergeProducts(recommended, sameCategory, sameBrand, hotProducts(), newProducts());
     }
 
-    private List<Product> fillWithFallback(List<Product> products) {
-        return mergeProducts(products, hotProducts(), newProducts());
+    // ── 根据用户行为数据，返回用户最感兴趣品类的热门商品 ────────────
+    private List<Product> categoryHotProducts(Long userId) {
+        // 找到用户互动最多的品类
+        List<UserBehavior> behaviors = behaviorRepository.findByUserId(userId);
+        if (behaviors.isEmpty()) return List.of();
+
+        Map<Long, Long> catActivity = new HashMap<>();
+        for (UserBehavior b : behaviors) {
+            productRepository.findById(b.getProductId()).ifPresent(p -> {
+                catActivity.merge(p.getCategoryId(), (long) b.getWeight(), Long::sum);
+            });
+        }
+        if (catActivity.isEmpty()) return List.of();
+
+        // 取权重最高的品类，降序排列
+        List<Long> topCats = catActivity.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
+                .limit(3)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        // 收集这些品类的热门商品
+        List<Product> results = new ArrayList<>();
+        for (Long catId : topCats) {
+            productRepository.findTop12ByStatusAndCategoryIdOrderBySalesCountDesc(ProductStatus.ON_SALE, catId)
+                    .stream()
+                    .filter(this::available)
+                    .forEach(results::add);
+        }
+        return results;
     }
 
     private List<Product> toProducts(List<Long> productIds) {
         return productIds.stream()
                 .map(productRepository::findById)
-                .flatMap(java.util.Optional::stream)
+                .flatMap(Optional::stream)
                 .filter(this::available)
                 .toList();
     }

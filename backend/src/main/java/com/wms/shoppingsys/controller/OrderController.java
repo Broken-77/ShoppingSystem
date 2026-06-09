@@ -61,6 +61,13 @@ public class OrderController {
         return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
     }
 
+    @PostMapping("/{id}/cancel")
+    public ApiResponse<OrderDtos.OrderResponse> cancel(@PathVariable Long id, HttpServletRequest request) {
+        CurrentUser user = requireUser(request);
+        Order order = orderService.cancel(user.id(), id);
+        return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<OrderDtos.OrderResponse> detail(@PathVariable Long id, HttpServletRequest request) {
         CurrentUser user = requireUser(request);

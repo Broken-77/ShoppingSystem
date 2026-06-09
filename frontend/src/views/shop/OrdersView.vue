@@ -19,6 +19,14 @@
           <RouterLink class="secondary-button" :to="`/orders/${order.id}`">
             {{ order.status === 'PENDING_PAYMENT' ? '去支付' : '查看详情' }}
           </RouterLink>
+          <button
+            v-if="order.status === 'PENDING_PAYMENT'"
+            type="button"
+            :disabled="cancelling === order.id"
+            @click="cancel(order.id)"
+          >
+            {{ cancelling === order.id ? '取消中' : '取消订单' }}
+          </button>
         </div>
       </div>
       <div class="table-wrap">
@@ -44,9 +52,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { listOrders } from '../../api/orders'
+import { listOrders, cancelOrder } from '../../api/orders'
 
 const orders = ref([])
+const cancelling = ref(null)
 
 function formatTime(value) {
   return value ? new Date(value).toLocaleString() : ''
@@ -73,4 +82,16 @@ function statusLabel(status) {
 onMounted(async () => {
   orders.value = await listOrders()
 })
+
+async function cancel(id) {
+  cancelling.value = id
+  try {
+    await cancelOrder(id)
+    orders.value = await listOrders()
+  } catch (err) {
+    alert(err.response?.data?.message || '取消失败')
+  } finally {
+    cancelling.value = null
+  }
+}
 </script>

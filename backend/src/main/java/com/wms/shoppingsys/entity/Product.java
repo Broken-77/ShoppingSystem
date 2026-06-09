@@ -117,6 +117,10 @@ public class Product {
         this.stock = this.stock - quantity;
     }
 
+    public void restoreStock(int quantity) {
+        this.stock = this.stock + quantity;
+    }
+
     public Long getId() {
         return id;
     }

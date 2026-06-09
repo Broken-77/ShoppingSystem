@@ -2,7 +2,11 @@
   <div class="app-shell">
     <AppNav />
     <main>
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <keep-alive :include="['ProductListView']">
+          <component :is="Component" />
+        </keep-alive>
+      </RouterView>
     </main>
   </div>
 </template>

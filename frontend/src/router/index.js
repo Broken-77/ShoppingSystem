@@ -15,6 +15,10 @@ import AdminOrdersView from '../views/admin/AdminOrdersView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return { top: 0 }
+  },
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/login', name: 'login', component: LoginView },

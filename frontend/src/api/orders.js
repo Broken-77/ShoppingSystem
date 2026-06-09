@@ -23,3 +23,7 @@ export async function createDirectOrder(productId, quantity) {
 export async function payOrder(id) {
   return unwrap(await api.post(`/orders/${id}/pay`))
 }
+
+export async function cancelOrder(id) {
+  return unwrap(await api.post(`/orders/${id}/cancel`))
+}

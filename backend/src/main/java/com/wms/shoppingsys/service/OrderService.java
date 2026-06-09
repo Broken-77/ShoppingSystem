@@ -172,6 +172,21 @@ public class OrderService {
     }
 
     @Transactional
+    public Order cancel(Long userId, Long id) {
+        Order order = getOwnedOrder(userId, id);
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_STATE, "该订单无法取消");
+        }
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        for (OrderItem item : items) {
+            Product product = productService.getProduct(item.getProductId());
+            product.restoreStock(item.getQuantity());
+        }
+        order.changeStatus(OrderStatus.CANCELLED);
+        return order;
+    }
+
+    @Transactional
     public Order updateStatus(Long id, OrderStatus status) {
         Order order = getOrder(id);
         boolean allowed = (order.getStatus() == OrderStatus.PAID && status == OrderStatus.FINISHED)

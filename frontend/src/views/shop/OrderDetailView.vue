@@ -57,6 +57,15 @@
           >
             {{ paying ? '支付中' : '立即支付' }}
           </button>
+          <button
+            v-if="order.status === 'PENDING_PAYMENT'"
+            class="secondary-button"
+            type="button"
+            :disabled="cancelling"
+            @click="cancel"
+          >
+            {{ cancelling ? '取消中' : '取消订单' }}
+          </button>
           <RouterLink class="secondary-button" to="/products">继续购物</RouterLink>
         </div>
       </div>
@@ -80,12 +89,13 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getOrder, payOrder } from '../../api/orders'
+import { getOrder, payOrder, cancelOrder } from '../../api/orders'
 
 const route = useRoute()
 const order = ref(null)
 const loading = ref(false)
 const paying = ref(false)
+const cancelling = ref(false)
 const message = ref('')
 const failed = ref(false)
 
@@ -141,6 +151,24 @@ async function pay() {
     message.value = err.response?.data?.message || '支付失败'
   } finally {
     paying.value = false
+  }
+}
+
+async function cancel() {
+  if (!order.value || order.value.status !== 'PENDING_PAYMENT') {
+    return
+  }
+  cancelling.value = true
+  message.value = ''
+  failed.value = false
+  try {
+    order.value = await cancelOrder(order.value.id)
+    message.value = '订单已取消'
+  } catch (err) {
+    failed.value = true
+    message.value = err.response?.data?.message || '取消失败'
+  } finally {
+    cancelling.value = false
   }
 }
 

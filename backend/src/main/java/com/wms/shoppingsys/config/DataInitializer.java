@@ -66,7 +66,17 @@ public class DataInitializer implements CommandLineRunner {
         User carol = userRepository.findByUsername("carol")
                 .orElseGet(() -> userRepository.save(new User("carol", hashPassword("pass123"),
                         UserRole.USER, UserStatus.ACTIVE)));
-        return Map.of("admin", admin, "alice", alice, "bob", bob, "carol", carol);
+        User dave = userRepository.findByUsername("dave")
+                .orElseGet(() -> userRepository.save(new User("dave", hashPassword("pass123"),
+                        UserRole.USER, UserStatus.ACTIVE)));
+        User eve = userRepository.findByUsername("eve")
+                .orElseGet(() -> userRepository.save(new User("eve", hashPassword("pass123"),
+                        UserRole.USER, UserStatus.ACTIVE)));
+        User frank = userRepository.findByUsername("frank")
+                .orElseGet(() -> userRepository.save(new User("frank", hashPassword("pass123"),
+                        UserRole.USER, UserStatus.ACTIVE)));
+        return Map.of("admin", admin, "alice", alice, "bob", bob, "carol", carol,
+                "dave", dave, "eve", eve, "frank", frank);
     }
 
     private Map<String, Category> seedCategories() {
@@ -267,17 +277,53 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedBehaviors(Map<String, User> users, Map<String, Product> products) {
         if (userBehaviorRepository.count() > 0) return;
-        var rng = new java.util.Random();
-        var names = new java.util.ArrayList<>(products.keySet());
-        String[] uns = {"alice","bob","carol"};
-        for (String un : uns) {
-            User u = users.get(un);
-            for (int i = 0; i < 15; i++) {
-                Product p = products.get(names.get(rng.nextInt(names.size())));
-                behaviorService.recordView(u.getId(), p.getId());
-                if (rng.nextDouble() < 0.3) behaviorService.recordCart(u.getId(), p.getId());
-                if (rng.nextDouble() < 0.15) behaviorService.recordOrder(u.getId(), p.getId());
-            }
+
+        List<Product> phone=products.values().stream().filter(p->p.getCategoryId()==1).toList();
+        List<Product> comp=products.values().stream().filter(p->p.getCategoryId()==2).toList();
+        List<Product> home=products.values().stream().filter(p->p.getCategoryId()==3).toList();
+        List<Product> sport=products.values().stream().filter(p->p.getCategoryId()==4).toList();
+        List<Product> beauty=products.values().stream().filter(p->p.getCategoryId()==5).toList();
+        List<Product> food=products.values().stream().filter(p->p.getCategoryId()==6).toList();
+
+        var rng = new java.util.Random(42);
+
+        // alice: 手机数码 70%，电脑15%，运动15%
+        behave(users.get("alice"), 20, phone, comp, sport, rng);
+        // bob: 电脑办公 70%，手机15%，家居15%
+        behave(users.get("bob"), 20, comp, phone, home, rng);
+        // carol: 家居生活 70%，运动15%，食品15%
+        behave(users.get("carol"), 20, home, sport, food, rng);
+        // dave: 运动户外 70%，手机15%，家居15%
+        behave(users.get("dave"), 20, sport, phone, home, rng);
+        // eve: 手机60%+运动40%（连接 alice ↔ dave）
+        behaveCross(users.get("eve"), 20, phone, sport, rng);
+        // frank: 电脑60%+家居40%（连接 bob ↔ carol）
+        behaveCross(users.get("frank"), 20, comp, home, rng);
+    }
+
+    private void behave(User user, int count, List<Product> main, List<Product> alt1,
+                        List<Product> alt2, java.util.Random rng) {
+        for (int i = 0; i < count; i++) {
+            double roll = rng.nextDouble();
+            Product p;
+            if (roll < 0.85) p = main.get(rng.nextInt(main.size()));
+            else if (roll < 0.95) p = alt1.get(rng.nextInt(alt1.size()));
+            else p = alt2.get(rng.nextInt(alt2.size()));
+
+            behaviorService.recordView(user.getId(), p.getId());
+            if (rng.nextDouble() < 0.4) behaviorService.recordCart(user.getId(), p.getId());
+            if (rng.nextDouble() < 0.25) behaviorService.recordOrder(user.getId(), p.getId());
+        }
+    }
+
+    private void behaveCross(User user, int count, List<Product> catA, List<Product> catB,
+                             java.util.Random rng) {
+        for (int i = 0; i < count; i++) {
+            Product p = rng.nextBoolean() ? catA.get(rng.nextInt(catA.size()))
+                                          : catB.get(rng.nextInt(catB.size()));
+            behaviorService.recordView(user.getId(), p.getId());
+            if (rng.nextDouble() < 0.4) behaviorService.recordCart(user.getId(), p.getId());
+            if (rng.nextDouble() < 0.25) behaviorService.recordOrder(user.getId(), p.getId());
         }
     }
 

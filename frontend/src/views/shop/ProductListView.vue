@@ -62,6 +62,8 @@ import ProductCard from '../../components/ProductCard.vue'
 import { listCategories, listProducts } from '../../api/products'
 import { clampPage, pageCount, paginateItems } from '../../utils/pagination.mjs'
 
+defineOptions({ name: 'ProductListView' })
+
 const PAGE_SIZE = 25
 const categories = ref([])
 const products = ref([])
