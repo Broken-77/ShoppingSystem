@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -55,19 +56,59 @@ public class OrderService {
             if (item.getQuantity() > product.getStock()) {
                 throw new BusinessException(ErrorCode.STOCK_NOT_ENOUGH, "库存不足");
             }
-            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).setScale(2, RoundingMode.HALF_UP));
         }
 
         Order order = orderRepository.save(new Order(generateOrderNo(), userId, total));
         for (CartItem item : cartItems) {
             Product product = productService.getOnSaleProduct(item.getProductId());
-            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).setScale(2, RoundingMode.HALF_UP);
             product.deductStock(item.getQuantity());
             orderItemRepository.save(new OrderItem(order.getId(), product.getId(), product.getName(),
                     product.getPrice(), item.getQuantity(), subtotal));
             behaviorRecorder.recordOrder(userId, product.getId());
         }
         cartItemRepository.deleteByUserId(userId);
+        return order;
+    }
+
+    @Transactional
+    public Order createOrderFromSelected(Long userId, List<Long> cartItemIds) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "请选择至少一件商品");
+        }
+
+        List<CartItem> selectedItems = new java.util.ArrayList<>();
+        for (Long itemId : cartItemIds) {
+            CartItem item = cartItemRepository.findById(itemId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "购物车项不存在"));
+            if (!userId.equals(item.getUserId())) {
+                throw new BusinessException(ErrorCode.NOT_FOUND, "购物车项不存在");
+            }
+            selectedItems.add(item);
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (CartItem item : selectedItems) {
+            Product product = productService.getOnSaleProduct(item.getProductId());
+            if (item.getQuantity() > product.getStock()) {
+                throw new BusinessException(ErrorCode.STOCK_NOT_ENOUGH, "库存不足");
+            }
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).setScale(2, RoundingMode.HALF_UP));
+        }
+
+        Order order = orderRepository.save(new Order(generateOrderNo(), userId, total));
+        for (CartItem item : selectedItems) {
+            Product product = productService.getOnSaleProduct(item.getProductId());
+            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).setScale(2, RoundingMode.HALF_UP);
+            product.deductStock(item.getQuantity());
+            orderItemRepository.save(new OrderItem(order.getId(), product.getId(), product.getName(),
+                    product.getPrice(), item.getQuantity(), subtotal));
+            behaviorRecorder.recordOrder(userId, product.getId());
+        }
+        for (CartItem item : selectedItems) {
+            cartItemRepository.delete(item);
+        }
         return order;
     }
 

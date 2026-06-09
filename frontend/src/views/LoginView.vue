@@ -7,7 +7,7 @@
     <div class="auth-card">
       <div>
         <h1>登录</h1>
-        <p class="muted">默认示例账号已填好，可直接体验。</p>
+        <p class="muted">登录您的账号。</p>
       </div>
       <form @submit.prevent="submitLogin">
       <label class="form-row">
@@ -21,19 +21,23 @@
       <p v-if="error" class="error">{{ error }}</p>
       <button class="primary-button" type="submit">登录</button>
       </form>
+      <p class="muted" style="margin-top: 16px; text-align: center;">
+        还没有账号？
+        <RouterLink to="/register">去注册</RouterLink>
+      </p>
     </div>
   </section>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
-const username = ref('alice')
-const password = ref('pass123')
+const username = ref('')
+const password = ref('')
 const error = ref('')
 
 async function submitLogin() {

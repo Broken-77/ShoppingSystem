@@ -32,6 +32,10 @@ export const useCartStore = defineStore('cart', () => {
     await load()
   }
 
+  async function clear() {
+    items.value = []
+  }
+
   return {
     items,
     loading,
@@ -39,6 +43,7 @@ export const useCartStore = defineStore('cart', () => {
     load,
     add,
     update,
-    remove
+    remove,
+    clear
   }
 })

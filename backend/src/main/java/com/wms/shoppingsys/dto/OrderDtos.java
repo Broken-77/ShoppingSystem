@@ -78,4 +78,7 @@ public final class OrderDtos {
 
     public record UpdateOrderStatusRequest(@NotNull OrderStatus status) {
     }
+
+    public record CreateOrderRequest(@NotNull List<Long> cartItemIds) {
+    }
 }

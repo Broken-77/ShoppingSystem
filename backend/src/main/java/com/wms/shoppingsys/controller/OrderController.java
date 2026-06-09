@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,6 +42,14 @@ public class OrderController {
     public ApiResponse<OrderDtos.OrderResponse> create(HttpServletRequest request) {
         CurrentUser user = requireUser(request);
         Order order = orderService.createOrder(user.id());
+        return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
+    }
+
+    @PostMapping("/selected")
+    public ApiResponse<OrderDtos.OrderResponse> createSelected(
+            @RequestBody OrderDtos.CreateOrderRequest req, HttpServletRequest request) {
+        CurrentUser user = requireUser(request);
+        Order order = orderService.createOrderFromSelected(user.id(), req.cartItemIds());
         return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
     }
 

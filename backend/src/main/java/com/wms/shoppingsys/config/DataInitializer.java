@@ -20,8 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Component
 @ConditionalOnProperty(prefix = "shopping.seed", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -72,7 +75,9 @@ public class DataInitializer implements CommandLineRunner {
                     new Category("手机数码", null, true, 1),
                     new Category("电脑办公", null, true, 2),
                     new Category("家居生活", null, true, 3),
-                    new Category("运动户外", null, true, 4)
+                    new Category("运动户外", null, true, 4),
+                    new Category("美妆个护", null, true, 5),
+                    new Category("食品饮料", null, true, 6)
             ));
         }
         List<Category> categories = categoryRepository.findAll();
@@ -80,64 +85,339 @@ public class DataInitializer implements CommandLineRunner {
                 "phone", findCategory(categories, "手机数码"),
                 "computer", findCategory(categories, "电脑办公"),
                 "home", findCategory(categories, "家居生活"),
-                "sport", findCategory(categories, "运动户外")
+                "sport", findCategory(categories, "运动户外"),
+                "beauty", findCategory(categories, "美妆个护"),
+                "food", findCategory(categories, "食品饮料")
         );
     }
 
     private Map<String, Product> seedProducts(Map<String, Category> categories) {
         if (productRepository.count() == 0) {
-            productRepository.saveAll(List.of(
-                    product(categories.get("phone"), "aurora-phone", "Aurora Phone 15", "旗舰影像手机", "Aurora", "4999.00", 80, 320),
-                    product(categories.get("phone"), "nova-phone", "Nova Mini Phone", "轻薄小屏手机", "Nova", "3299.00", 65, 210),
-                    product(categories.get("phone"), "phone-case", "MagSafe Phone Case", "防摔透明手机壳", "ShellLab", "129.00", 240, 660),
-                    product(categories.get("phone"), "fast-charger", "GaN Fast Charger", "65W 氮化镓快充", "Voltix", "169.00", 180, 540),
-                    product(categories.get("computer"), "ultra-laptop", "FeatherBook Pro", "14 英寸高性能笔记本", "Feather", "8999.00", 36, 150),
-                    product(categories.get("computer"), "mechanical-keyboard", "Tactile Mechanical Keyboard", "三模机械键盘", "KeyForge", "699.00", 90, 260),
-                    product(categories.get("computer"), "wireless-mouse", "Silent Wireless Mouse", "静音办公鼠标", "Mousio", "199.00", 130, 310),
-                    product(categories.get("computer"), "monitor-4k", "Vision 4K Monitor", "27 英寸 4K 显示器", "Vision", "1899.00", 42, 120),
-                    product(categories.get("home"), "air-purifier", "Breeze Air Purifier", "智能空气净化器", "Breeze", "1299.00", 55, 175),
-                    product(categories.get("home"), "desk-lamp", "Halo Desk Lamp", "护眼台灯", "Halo", "269.00", 110, 280),
-                    product(categories.get("home"), "coffee-maker", "Morning Coffee Maker", "家用滴滤咖啡机", "Morning", "499.00", 48, 190),
-                    product(categories.get("home"), "storage-box", "Modular Storage Box", "模块化收纳箱", "Nest", "89.00", 260, 420),
-                    product(categories.get("sport"), "running-shoes", "CloudRun Shoes", "缓震跑步鞋", "CloudRun", "599.00", 75, 240),
-                    product(categories.get("sport"), "yoga-mat", "Grip Yoga Mat", "防滑瑜伽垫", "Balance", "159.00", 160, 360),
-                    product(categories.get("sport"), "bike-helmet", "Urban Bike Helmet", "城市骑行头盔", "Rider", "299.00", 70, 130),
-                    product(categories.get("sport"), "wireless-headphones", "Wireless Headphones", "运动蓝牙耳机", "Pulse", "399.00", 95, 330)
-            ));
+            // 手机数码 (38件)
+            productRepository.save(new Product(categories.get("phone").getId(), "iPhone 15 Pro Max", "iPhone 15 Pro Max", "Brand", new BigDecimal("8139.9"), 39, "https://images.pexels.com/photos/3945672/pexels-photo-3945672.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 79));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 Mate 60 Pro", "华为 Mate 60 Pro", "Brand", new BigDecimal("6809.9"), 21, "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 82));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 14 Ultra", "小米 14 Ultra", "Brand", new BigDecimal("6229.9"), 26, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 68));
+            productRepository.save(new Product(categories.get("phone").getId(), "OPPO Find X7 Ultra", "OPPO Find X7 Ultra", "Brand", new BigDecimal("4879.9"), 50, "https://images.pexels.com/photos/20074768/pexels-photo-20074768.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 79));
+            productRepository.save(new Product(categories.get("phone").getId(), "vivo X100 Pro", "vivo X100 Pro", "Brand", new BigDecimal("5099.9"), 24, "https://images.pexels.com/photos/35229446/pexels-photo-35229446.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 44));
+            productRepository.save(new Product(categories.get("phone").getId(), "三星 Galaxy S24 Ultra", "三星 Galaxy S24 Ultra", "Brand", new BigDecimal("8539.9"), 27, "https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 41));
+            productRepository.save(new Product(categories.get("phone").getId(), "一加 12", "一加 12", "Brand", new BigDecimal("4159.9"), 15, "https://images.pexels.com/photos/10343713/pexels-photo-10343713.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 210));
+            productRepository.save(new Product(categories.get("phone").getId(), "荣耀 Magic6 Pro", "荣耀 Magic6 Pro", "Brand", new BigDecimal("5289.9"), 36, "https://images.pexels.com/photos/34391717/pexels-photo-34391717.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 92));
+            productRepository.save(new Product(categories.get("phone").getId(), "Nova 12 Ultra", "Nova 12 Ultra", "Brand", new BigDecimal("2999.9"), 38, "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 112));
+            productRepository.save(new Product(categories.get("phone").getId(), "AirPods Pro 2", "AirPods Pro 2", "Brand", new BigDecimal("2799.9"), 19, "https://images.pexels.com/photos/3921845/pexels-photo-3921845.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 265));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 FreeBuds Pro 3", "华为 FreeBuds Pro 3", "Brand", new BigDecimal("1539.9"), 46, "https://images.pexels.com/photos/14741306/pexels-photo-14741306.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 258));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 Buds 4 Pro", "小米 Buds 4 Pro", "Brand", new BigDecimal("1499.9"), 57, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 339));
+            productRepository.save(new Product(categories.get("phone").getId(), "Apple Watch Ultra 2", "Apple Watch Ultra 2", "Brand", new BigDecimal("7609.9"), 14, "https://images.pexels.com/photos/5083218/pexels-photo-5083218.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 33));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 Watch GT 4", "华为 Watch GT 4", "Brand", new BigDecimal("699.9"), 31, "https://images.pexels.com/photos/5083218/pexels-photo-5083218.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 314));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米手环 8 Pro", "小米手环 8 Pro", "Brand", new BigDecimal("1629.9"), 88, "https://images.pexels.com/photos/6516206/pexels-photo-6516206.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 241));
+            productRepository.save(new Product(categories.get("phone").getId(), "iPad Air M2", "iPad Air M2", "Brand", new BigDecimal("3439.9"), 23, "https://images.pexels.com/photos/10535365/pexels-photo-10535365.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 211));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 MatePad Pro 13.2", "华为 MatePad Pro 13.2", "Brand", new BigDecimal("4569.9"), 30, "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 107));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米平板 6S Pro", "小米平板 6S Pro", "Brand", new BigDecimal("2789.9"), 31, "https://images.pexels.com/photos/6913311/pexels-photo-6913311.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 92));
+            productRepository.save(new Product(categories.get("phone").getId(), "ANKER 65W 氮化镓充电器", "ANKER 65W 氮化镓充电器", "Brand", new BigDecimal("4979.9"), 51, "https://images.pexels.com/photos/1028674/pexels-photo-1028674.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 173));
+            productRepository.save(new Product(categories.get("phone").getId(), "闪迪 256GB TF 存储卡", "闪迪 256GB TF 存储卡", "Brand", new BigDecimal("159.9"), 125, "https://images.pexels.com/photos/2147082/pexels-photo-2147082.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 758));
+            productRepository.save(new Product(categories.get("phone").getId(), "Sony WH-1000XM5", "Sony WH-1000XM5", "Brand", new BigDecimal("2219.9"), 17, "https://images.pexels.com/photos/37668074/pexels-photo-37668074.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 198));
+            productRepository.save(new Product(categories.get("phone").getId(), "Bose QC Ultra", "Bose QC Ultra", "Brand", new BigDecimal("2159.9"), 30, "https://images.pexels.com/photos/29617989/pexels-photo-29617989.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 188));
+            productRepository.save(new Product(categories.get("phone").getId(), "JBL Flip 6", "JBL Flip 6", "Brand", new BigDecimal("2249.9"), 22, "https://images.pexels.com/photos/20285556/pexels-photo-20285556.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 267));
+            productRepository.save(new Product(categories.get("phone").getId(), "Kindle Paperwhite 5", "Kindle Paperwhite 5", "Brand", new BigDecimal("759.9"), 116, "https://images.pexels.com/photos/18313245/pexels-photo-18313245.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 200));
+            productRepository.save(new Product(categories.get("phone").getId(), "GoPro Hero 12 Black", "GoPro Hero 12 Black", "Brand", new BigDecimal("1759.9"), 38, "https://images.pexels.com/photos/8799699/pexels-photo-8799699.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 384));
+            productRepository.save(new Product(categories.get("phone").getId(), "Insta360 X4", "Insta360 X4", "Brand", new BigDecimal("3079.9"), 20, "https://images.pexels.com/photos/6630001/pexels-photo-6630001.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 257));
+            productRepository.save(new Product(categories.get("phone").getId(), "MacBook Pro 14 M3", "MacBook Pro 14 M3", "Brand", new BigDecimal("12119.9"), 18, "https://images.pexels.com/photos/10655906/pexels-photo-10655906.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 29));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 MateBook X Pro 2024", "华为 MateBook X Pro 2024", "Brand", new BigDecimal("8469.9"), 11, "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 137));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 Book Pro 16", "小米 Book Pro 16", "Brand", new BigDecimal("12739.9"), 11, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 95));
+            productRepository.save(new Product(categories.get("phone").getId(), "Samsung ViewFinity S9", "Samsung ViewFinity S9", "Brand", new BigDecimal("2509.9"), 28, "https://images.pexels.com/photos/214488/pexels-photo-214488.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 54));
+            productRepository.save(new Product(categories.get("phone").getId(), "罗技 G Pro X 耳机", "罗技 G Pro X 耳机", "Brand", new BigDecimal("599.9"), 49, "https://images.pexels.com/photos/210927/pexels-photo-210927.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 177));
+            productRepository.save(new Product(categories.get("phone").getId(), "Samsung T7 Shield 2TB", "Samsung T7 Shield 2TB", "Brand", new BigDecimal("1539.9"), 114, "https://images.pexels.com/photos/214488/pexels-photo-214488.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 447));
+            productRepository.save(new Product(categories.get("phone").getId(), "华为 AX6", "华为 AX6", "Brand", new BigDecimal("1059.9"), 119, "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 454));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 扫拖机器人 X20+", "小米 扫拖机器人 X20+", "Brand", new BigDecimal("6629.9"), 37, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 88));
+            productRepository.save(new Product(categories.get("phone").getId(), "Bose SoundLink Max", "Bose SoundLink Max", "Brand", new BigDecimal("1679.9"), 148, "https://images.pexels.com/photos/29617989/pexels-photo-29617989.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 481));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 空气净化器 4 Pro", "小米 空气净化器 4 Pro", "Brand", new BigDecimal("3549.9"), 15, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 139));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 电热水壶 2", "小米 电热水壶 2", "Brand", new BigDecimal("189.9"), 74, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 416));
+            productRepository.save(new Product(categories.get("phone").getId(), "小米 走步机 C2", "小米 走步机 C2", "Brand", new BigDecimal("1769.9"), 81, "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 182));
+            // 电脑办公 (19件)
+            productRepository.save(new Product(categories.get("computer").getId(), "绿联 手机支架 桌面", "绿联 手机支架 桌面", "Brand", new BigDecimal("849.9"), 72, "https://images.pexels.com/photos/34882934/pexels-photo-34882934.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 149));
+            productRepository.save(new Product(categories.get("computer").getId(), "ThinkPad X1 Carbon Gen 12", "ThinkPad X1 Carbon Gen 12", "Brand", new BigDecimal("8409.9"), 8, "https://images.pexels.com/photos/3550482/pexels-photo-3550482.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 38));
+            productRepository.save(new Product(categories.get("computer").getId(), "华硕 ROG 枪神8", "华硕 ROG 枪神8", "Brand", new BigDecimal("8619.9"), 36, "https://images.pexels.com/photos/12877878/pexels-photo-12877878.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 40));
+            productRepository.save(new Product(categories.get("computer").getId(), "Dell U2724D", "Dell U2724D", "Brand", new BigDecimal("3189.9"), 30, "https://images.pexels.com/photos/9539073/pexels-photo-9539073.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 263));
+            productRepository.save(new Product(categories.get("computer").getId(), "LG 27GR95UM", "LG 27GR95UM", "Brand", new BigDecimal("3029.9"), 26, "https://images.pexels.com/photos/31726554/pexels-photo-31726554.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 111));
+            productRepository.save(new Product(categories.get("computer").getId(), "Logitech MX Master 3S", "Logitech MX Master 3S", "Brand", new BigDecimal("649.9"), 87, "https://images.pexels.com/photos/7006949/pexels-photo-7006949.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 151));
+            productRepository.save(new Product(categories.get("computer").getId(), "Keychron Q1 Pro", "Keychron Q1 Pro", "Brand", new BigDecimal("809.9"), 54, "https://images.pexels.com/photos/28534977/pexels-photo-28534977.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 177));
+            productRepository.save(new Product(categories.get("computer").getId(), "Cherry MX Board 3.0S", "Cherry MX Board 3.0S", "Brand", new BigDecimal("989.9"), 132, "https://images.pexels.com/photos/8180524/pexels-photo-8180524.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 135));
+            productRepository.save(new Product(categories.get("computer").getId(), "Blue Yeti X USB 麦克风", "Blue Yeti X USB 麦克风", "Brand", new BigDecimal("1709.9"), 37, "https://images.pexels.com/photos/37976280/pexels-photo-37976280.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 286));
+            productRepository.save(new Product(categories.get("computer").getId(), "WD My Book 12TB", "WD My Book 12TB", "Brand", new BigDecimal("989.9"), 116, "https://images.pexels.com/photos/10182867/pexels-photo-10182867.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 414));
+            productRepository.save(new Product(categories.get("computer").getId(), "TP-Link AXE5400", "TP-Link AXE5400", "Brand", new BigDecimal("1159.9"), 140, "https://images.pexels.com/photos/18446979/pexels-photo-18446979.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 453));
+            productRepository.save(new Product(categories.get("computer").getId(), "明基 ScreenBar Halo", "明基 ScreenBar Halo", "Brand", new BigDecimal("239.9"), 139, "https://images.pexels.com/photos/34619007/pexels-photo-34619007.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 205));
+            productRepository.save(new Product(categories.get("computer").getId(), "爱格升 LX 显示器支架", "爱格升 LX 显示器支架", "Brand", new BigDecimal("199.9"), 168, "https://images.pexels.com/photos/326512/pexels-photo-326512.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 288));
+            productRepository.save(new Product(categories.get("computer").getId(), "Herman Miller Aeron", "Herman Miller Aeron", "Brand", new BigDecimal("8169.9"), 20, "https://images.pexels.com/photos/3968051/pexels-photo-3968051.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 39));
+            productRepository.save(new Product(categories.get("computer").getId(), "网易严选 人体工学椅", "网易严选 人体工学椅", "Brand", new BigDecimal("9239.9"), 23, "https://images.pexels.com/photos/31726674/pexels-photo-31726674.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 136));
+            productRepository.save(new Product(categories.get("computer").getId(), "Wacom Intuos Pro M", "Wacom Intuos Pro M", "Brand", new BigDecimal("3559.9"), 51, "https://images.pexels.com/photos/301792/pexels-photo-301792.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 187));
+            productRepository.save(new Product(categories.get("computer").getId(), "APC Back-UPS 650", "APC Back-UPS 650", "Brand", new BigDecimal("469.9"), 181, "https://images.pexels.com/photos/11349464/pexels-photo-11349464.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 629));
+            productRepository.save(new Product(categories.get("computer").getId(), "绿联 雷电4 扩展坞", "绿联 雷电4 扩展坞", "Brand", new BigDecimal("139.9"), 88, "https://images.pexels.com/photos/34882934/pexels-photo-34882934.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 223));
+            productRepository.save(new Product(categories.get("computer").getId(), "微软 Surface Pro 10", "微软 Surface Pro 10", "Brand", new BigDecimal("10699.9"), 12, "https://images.pexels.com/photos/1181207/pexels-photo-1181207.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 146));
+            // 家居生活 (33件)
+            productRepository.save(new Product(categories.get("home").getId(), "大疆 Osmo Mobile 6", "大疆 Osmo Mobile 6", "Brand", new BigDecimal("999.9"), 38, "https://images.pexels.com/photos/6732203/pexels-photo-6732203.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 96));
+            productRepository.save(new Product(categories.get("home").getId(), "雷蛇 DeathAdder V3 Pro", "雷蛇 DeathAdder V3 Pro", "Brand", new BigDecimal("819.9"), 110, "https://images.pexels.com/photos/30641697/pexels-photo-30641697.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 110));
+            productRepository.save(new Product(categories.get("home").getId(), "群晖 DS224+", "群晖 DS224+", "Brand", new BigDecimal("2399.9"), 15, "https://images.pexels.com/photos/37283954/pexels-photo-37283954.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 58));
+            productRepository.save(new Product(categories.get("home").getId(), "罗技 StreamCam", "罗技 StreamCam", "Brand", new BigDecimal("609.9"), 114, "https://images.pexels.com/photos/35078392/pexels-photo-35078392.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 170));
+            productRepository.save(new Product(categories.get("home").getId(), "戴森 V15 Detect", "戴森 V15 Detect", "Brand", new BigDecimal("4379.9"), 16, "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 190));
+            productRepository.save(new Product(categories.get("home").getId(), "戴森 Airwrap HS05", "戴森 Airwrap HS05", "Brand", new BigDecimal("3509.9"), 29, "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 56));
+            productRepository.save(new Product(categories.get("home").getId(), "飞利浦 空气炸锅 HD9651", "飞利浦 空气炸锅 HD9651", "Brand", new BigDecimal("729.9"), 87, "https://images.pexels.com/photos/35285814/pexels-photo-35285814.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 141));
+            productRepository.save(new Product(categories.get("home").getId(), "德龙 ECAM23.460 全自动咖啡机", "德龙 ECAM23.460 全自动咖啡机", "Brand", new BigDecimal("3759.9"), 43, "https://images.pexels.com/photos/6612594/pexels-photo-6612594.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 270));
+            productRepository.save(new Product(categories.get("home").getId(), "松下 SR-HBC184 电饭煲", "松下 SR-HBC184 电饭煲", "Brand", new BigDecimal("3519.9"), 34, "https://images.pexels.com/photos/25242875/pexels-photo-25242875.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 142));
+            productRepository.save(new Product(categories.get("home").getId(), "九阳 DJ13B-D08EC 豆浆机", "九阳 DJ13B-D08EC 豆浆机", "Brand", new BigDecimal("2269.9"), 59, "https://images.pexels.com/photos/35261867/pexels-photo-35261867.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 91));
+            productRepository.save(new Product(categories.get("home").getId(), "戴森 Pure Cool 空气净化风扇", "戴森 Pure Cool 空气净化风扇", "Brand", new BigDecimal("3729.9"), 28, "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 277));
+            productRepository.save(new Product(categories.get("home").getId(), "Aqara 智能窗帘电机 C3", "Aqara 智能窗帘电机 C3", "Brand", new BigDecimal("1139.9"), 97, "https://images.pexels.com/photos/25473948/pexels-photo-25473948.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 390));
+            productRepository.save(new Product(categories.get("home").getId(), "Yeelight 智能吸顶灯 Pro", "Yeelight 智能吸顶灯 Pro", "Brand", new BigDecimal("3939.9"), 50, "https://images.pexels.com/photos/19701594/pexels-photo-19701594.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 82));
+            productRepository.save(new Product(categories.get("home").getId(), "德业 DYD-T22A3 除湿机", "德业 DYD-T22A3 除湿机", "Brand", new BigDecimal("579.9"), 114, "https://images.pexels.com/photos/34314973/pexels-photo-34314973.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 323));
+            productRepository.save(new Product(categories.get("home").getId(), "MUJI 超声波香薰机", "MUJI 超声波香薰机", "Brand", new BigDecimal("139.9"), 173, "https://images.pexels.com/photos/26732084/pexels-photo-26732084.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 381));
+            productRepository.save(new Product(categories.get("home").getId(), "象印 SM-SG48 保温杯", "象印 SM-SG48 保温杯", "Brand", new BigDecimal("3939.9"), 19, "https://images.pexels.com/photos/10361760/pexels-photo-10361760.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 234));
+            productRepository.save(new Product(categories.get("home").getId(), "水星家纺 95鹅绒被", "水星家纺 95鹅绒被", "Brand", new BigDecimal("359.9"), 81, "https://images.pexels.com/photos/2344867/pexels-photo-2344867.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 647));
+            productRepository.save(new Product(categories.get("home").getId(), "天堂 晴雨伞 三折", "天堂 晴雨伞 三折", "Brand", new BigDecimal("69.9"), 93, "https://images.pexels.com/photos/29725599/pexels-photo-29725599.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 421));
+            productRepository.save(new Product(categories.get("home").getId(), "3M 净水器 SDW8000", "3M 净水器 SDW8000", "Brand", new BigDecimal("1439.9"), 89, "https://images.pexels.com/photos/3992946/pexels-photo-3992946.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 106));
+            productRepository.save(new Product(categories.get("home").getId(), "Bruno 多功能料理锅", "Bruno 多功能料理锅", "Brand", new BigDecimal("139.9"), 88, "https://images.pexels.com/photos/36988958/pexels-photo-36988958.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 521));
+            productRepository.save(new Product(categories.get("home").getId(), "美的 M1-L213C 微波炉", "美的 M1-L213C 微波炉", "Brand", new BigDecimal("2509.9"), 35, "https://images.pexels.com/photos/31570615/pexels-photo-31570615.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 165));
+            productRepository.save(new Product(categories.get("home").getId(), "安踏 C37 5.0 休闲鞋", "安踏 C37 5.0 休闲鞋", "Brand", new BigDecimal("739.9"), 147, "https://images.pexels.com/photos/15059764/pexels-photo-15059764.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 80));
+            productRepository.save(new Product(categories.get("home").getId(), "Stanley 户外保温箱 15L", "Stanley 户外保温箱 15L", "Brand", new BigDecimal("719.9"), 99, "https://images.pexels.com/photos/14974681/pexels-photo-14974681.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 478));
+            productRepository.save(new Product(categories.get("home").getId(), "佳明 Forerunner 265", "佳明 Forerunner 265", "Brand", new BigDecimal("1019.9"), 77, "https://images.pexels.com/photos/37894081/pexels-photo-37894081.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 470));
+            productRepository.save(new Product(categories.get("home").getId(), "崔克 Domane AL 4", "崔克 Domane AL 4", "Brand", new BigDecimal("12469.9"), 40, "https://images.pexels.com/photos/14375828/pexels-photo-14375828.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 65));
+            productRepository.save(new Product(categories.get("home").getId(), "Charlotte Tilbury 枕边话", "Charlotte Tilbury 枕边话", "Brand", new BigDecimal("219.9"), 220, "https://images.pexels.com/photos/7466181/pexels-photo-7466181.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 455));
+            productRepository.save(new Product(categories.get("home").getId(), "潘海利根 兽首狐狸 75ml", "潘海利根 兽首狐狸 75ml", "Brand", new BigDecimal("1959.9"), 52, "https://images.pexels.com/photos/7610571/pexels-photo-7610571.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 339));
+            productRepository.save(new Product(categories.get("home").getId(), "Marvis 牙膏套装 7支", "Marvis 牙膏套装 7支", "Brand", new BigDecimal("79.9"), 192, "https://images.pexels.com/photos/3735649/pexels-photo-3735649.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 402));
+            productRepository.save(new Product(categories.get("home").getId(), "illy 深度烘焙咖啡粉 250g", "illy 深度烘焙咖啡粉 250g", "Brand", new BigDecimal("119.9"), 176, "https://images.pexels.com/photos/27528587/pexels-photo-27528587.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 153));
+            productRepository.save(new Product(categories.get("home").getId(), "瑞幸 冻干咖啡粉 12颗", "瑞幸 冻干咖啡粉 12颗", "Brand", new BigDecimal("99.9"), 250, "https://images.pexels.com/photos/5574070/pexels-photo-5574070.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 1190));
+            productRepository.save(new Product(categories.get("home").getId(), "永璞 闪萃咖啡液 14杯", "永璞 闪萃咖啡液 14杯", "Brand", new BigDecimal("179.9"), 224, "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 498));
+            productRepository.save(new Product(categories.get("home").getId(), "安佳 全脂奶粉 1kg", "安佳 全脂奶粉 1kg", "Brand", new BigDecimal("79.9"), 196, "https://images.pexels.com/photos/37424061/pexels-photo-37424061.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 282));
+            productRepository.save(new Product(categories.get("home").getId(), "奔富 Bin 389 干红 750ml", "奔富 Bin 389 干红 750ml", "Brand", new BigDecimal("2859.9"), 22, "https://images.pexels.com/photos/16055974/pexels-photo-16055974.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 214));
+            // 运动户外 (21件)
+            productRepository.save(new Product(categories.get("sport").getId(), "Nike Air Zoom Pegasus 40", "Nike Air Zoom Pegasus 40", "Brand", new BigDecimal("659.9"), 100, "https://images.pexels.com/photos/2043476/pexels-photo-2043476.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 85));
+            productRepository.save(new Product(categories.get("sport").getId(), "Adidas Ultraboost Light", "Adidas Ultraboost Light", "Brand", new BigDecimal("1009.9"), 89, "https://images.pexels.com/photos/11883282/pexels-photo-11883282.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 350));
+            productRepository.save(new Product(categories.get("sport").getId(), "李宁 超轻21 跑鞋", "李宁 超轻21 跑鞋", "Brand", new BigDecimal("459.9"), 158, "https://images.pexels.com/photos/260044/pexels-photo-260044.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 540));
+            productRepository.save(new Product(categories.get("sport").getId(), "Lululemon Align 瑜伽裤", "Lululemon Align 瑜伽裤", "Brand", new BigDecimal("899.9"), 84, "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 385));
+            productRepository.save(new Product(categories.get("sport").getId(), "Keep 瑜伽垫 TPE", "Keep 瑜伽垫 TPE", "Brand", new BigDecimal("839.9"), 50, "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 485));
+            productRepository.save(new Product(categories.get("sport").getId(), "Nike Pro 运动内衣", "Nike Pro 运动内衣", "Brand", new BigDecimal("3579.9"), 22, "https://images.pexels.com/photos/2043476/pexels-photo-2043476.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 79));
+            productRepository.save(new Product(categories.get("sport").getId(), "迪卡侬 MH500 登山包", "迪卡侬 MH500 登山包", "Brand", new BigDecimal("5039.9"), 13, "https://images.pexels.com/photos/1178525/pexels-photo-1178525.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 27));
+            productRepository.save(new Product(categories.get("sport").getId(), "The North Face 羽绒服 96Nuptse", "The North Face 羽绒服 96Nuptse", "Brand", new BigDecimal("2799.9"), 23, "https://images.pexels.com/photos/37550191/pexels-photo-37550191.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 170));
+            productRepository.save(new Product(categories.get("sport").getId(), "骆驼 露营帐篷 3-4人", "骆驼 露营帐篷 3-4人", "Brand", new BigDecimal("2589.9"), 40, "https://images.pexels.com/photos/17192955/pexels-photo-17192955.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 132));
+            productRepository.save(new Product(categories.get("sport").getId(), "YETI Rambler 水壶 769ml", "YETI Rambler 水壶 769ml", "Brand", new BigDecimal("79.9"), 168, "https://images.pexels.com/photos/8266854/pexels-photo-8266854.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 408));
+            productRepository.save(new Product(categories.get("sport").getId(), "Peloton Bike+ 健身车", "Peloton Bike+ 健身车", "Brand", new BigDecimal("2349.9"), 49, "https://images.pexels.com/photos/24244151/pexels-photo-24244151.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 107));
+            productRepository.save(new Product(categories.get("sport").getId(), "Keep 智能跳绳", "Keep 智能跳绳", "Brand", new BigDecimal("19.9"), 128, "https://images.pexels.com/photos/4108295/pexels-photo-4108295.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 771));
+            productRepository.save(new Product(categories.get("sport").getId(), "哑铃套装 20kg 可调节", "哑铃套装 20kg 可调节", "Brand", new BigDecimal("669.9"), 48, "https://images.pexels.com/photos/7743320/pexels-photo-7743320.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 215));
+            productRepository.save(new Product(categories.get("sport").getId(), "Nike 瑜伽训练垫 5mm", "Nike 瑜伽训练垫 5mm", "Brand", new BigDecimal("1669.9"), 143, "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 409));
+            productRepository.save(new Product(categories.get("sport").getId(), "Garmin Fenix 7X Pro", "Garmin Fenix 7X Pro", "Brand", new BigDecimal("5579.9"), 21, "https://images.pexels.com/photos/3999644/pexels-photo-3999644.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 142));
+            productRepository.save(new Product(categories.get("sport").getId(), "Shimano RC7 骑行锁鞋", "Shimano RC7 骑行锁鞋", "Brand", new BigDecimal("319.9"), 114, "https://images.pexels.com/photos/5807638/pexels-photo-5807638.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 730));
+            productRepository.save(new Product(categories.get("sport").getId(), "Speedo Fastskin 泳镜", "Speedo Fastskin 泳镜", "Brand", new BigDecimal("289.9"), 140, "https://images.pexels.com/photos/28939350/pexels-photo-28939350.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 612));
+            productRepository.save(new Product(categories.get("sport").getId(), "Arena 游泳训练脚蹼", "Arena 游泳训练脚蹼", "Brand", new BigDecimal("319.9"), 233, "https://images.pexels.com/photos/30157150/pexels-photo-30157150.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 289));
+            productRepository.save(new Product(categories.get("sport").getId(), "Wilson NBA 篮球", "Wilson NBA 篮球", "Brand", new BigDecimal("389.9"), 146, "https://images.pexels.com/photos/13179883/pexels-photo-13179883.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 284));
+            productRepository.save(new Product(categories.get("sport").getId(), "Yonex 天斧 AX100ZZ", "Yonex 天斧 AX100ZZ", "Brand", new BigDecimal("1599.9"), 71, "https://images.pexels.com/photos/11312132/pexels-photo-11312132.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 473));
+            productRepository.save(new Product(categories.get("sport").getId(), "Garmin Edge 540 码表", "Garmin Edge 540 码表", "Brand", new BigDecimal("6109.9"), 25, "https://images.pexels.com/photos/3999644/pexels-photo-3999644.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 71));
+            // 美妆个护 (17件)
+            productRepository.save(new Product(categories.get("beauty").getId(), "兰蔻 极光水 150ml", "兰蔻 极光水 150ml", "Brand", new BigDecimal("1499.9"), 50, "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 316));
+            productRepository.save(new Product(categories.get("beauty").getId(), "SK-II 神仙水 230ml", "SK-II 神仙水 230ml", "Brand", new BigDecimal("1199.9"), 98, "https://images.pexels.com/photos/10476733/pexels-photo-10476733.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 453));
+            productRepository.save(new Product(categories.get("beauty").getId(), "雅诗兰黛 小棕瓶精华 50ml", "雅诗兰黛 小棕瓶精华 50ml", "Brand", new BigDecimal("789.9"), 107, "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 405));
+            productRepository.save(new Product(categories.get("beauty").getId(), "海蓝之谜 面霜 60ml", "海蓝之谜 面霜 60ml", "Brand", new BigDecimal("3369.9"), 58, "https://images.pexels.com/photos/6635929/pexels-photo-6635929.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 205));
+            productRepository.save(new Product(categories.get("beauty").getId(), "Olay 小白瓶 40ml", "Olay 小白瓶 40ml", "Brand", new BigDecimal("429.9"), 113, "https://images.pexels.com/photos/28847445/pexels-photo-28847445.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 423));
+            productRepository.save(new Product(categories.get("beauty").getId(), "珀莱雅 双抗精华 30ml", "珀莱雅 双抗精华 30ml", "Brand", new BigDecimal("439.9"), 101, "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 529));
+            productRepository.save(new Product(categories.get("beauty").getId(), "迪奥 口红 999 哑光", "迪奥 口红 999 哑光", "Brand", new BigDecimal("309.9"), 176, "https://images.pexels.com/photos/6648498/pexels-photo-6648498.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 800));
+            productRepository.save(new Product(categories.get("beauty").getId(), "Tom Ford 黑金唇膏 16", "Tom Ford 黑金唇膏 16", "Brand", new BigDecimal("289.9"), 85, "https://images.pexels.com/photos/5809488/pexels-photo-5809488.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 539));
+            productRepository.save(new Product(categories.get("beauty").getId(), "YSL 小金条 #21", "YSL 小金条 #21", "Brand", new BigDecimal("559.9"), 67, "https://images.pexels.com/photos/29899584/pexels-photo-29899584.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 120));
+            productRepository.save(new Product(categories.get("beauty").getId(), "MAC 生姜高光 DoubleGleam", "MAC 生姜高光 DoubleGleam", "Brand", new BigDecimal("169.9"), 71, "https://images.pexels.com/photos/39284/pexels-photo-39284.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 383));
+            productRepository.save(new Product(categories.get("beauty").getId(), "Jo Malone 蓝风铃 30ml", "Jo Malone 蓝风铃 30ml", "Brand", new BigDecimal("1579.9"), 54, "https://images.pexels.com/photos/33615818/pexels-photo-33615818.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 440));
+            productRepository.save(new Product(categories.get("beauty").getId(), "Diptyque 檀道 75ml", "Diptyque 檀道 75ml", "Brand", new BigDecimal("1689.9"), 109, "https://images.pexels.com/photos/2866796/pexels-photo-2866796.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 265));
+            productRepository.save(new Product(categories.get("beauty").getId(), "Aesop 赋活芳香护手霜 75ml", "Aesop 赋活芳香护手霜 75ml", "Brand", new BigDecimal("109.9"), 178, "https://images.pexels.com/photos/17788297/pexels-photo-17788297.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 383));
+            productRepository.save(new Product(categories.get("beauty").getId(), "卡诗 白金赋活洗发水 250ml", "卡诗 白金赋活洗发水 250ml", "Brand", new BigDecimal("229.9"), 159, "https://images.pexels.com/photos/33807622/pexels-photo-33807622.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 417));
+            productRepository.save(new Product(categories.get("beauty").getId(), "戴森 Supersonic 吹风机", "戴森 Supersonic 吹风机", "Brand", new BigDecimal("1179.9"), 123, "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 315));
+            productRepository.save(new Product(categories.get("beauty").getId(), "CeraVe 保湿洁面乳 473ml", "CeraVe 保湿洁面乳 473ml", "Brand", new BigDecimal("119.9"), 167, "https://images.pexels.com/photos/14107358/pexels-photo-14107358.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 421));
+            productRepository.save(new Product(categories.get("beauty").getId(), "修丽可 CF 抗氧化精华 30ml", "修丽可 CF 抗氧化精华 30ml", "Brand", new BigDecimal("2059.9"), 21, "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 131));
+            // 食品饮料 (15件)
+            productRepository.save(new Product(categories.get("food").getId(), "三只松鼠 每日坚果 750g", "三只松鼠 每日坚果 750g", "Brand", new BigDecimal("99.9"), 152, "https://images.pexels.com/photos/5507656/pexels-photo-5507656.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 489));
+            productRepository.save(new Product(categories.get("food").getId(), "良品铺子 猪肉脯 500g", "良品铺子 猪肉脯 500g", "Brand", new BigDecimal("79.9"), 179, "https://images.pexels.com/photos/5237009/pexels-photo-5237009.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 740));
+            productRepository.save(new Product(categories.get("food").getId(), "瑞士莲 软心巧克力 600g", "瑞士莲 软心巧克力 600g", "Brand", new BigDecimal("49.9"), 316, "https://images.pexels.com/photos/6167328/pexels-photo-6167328.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 996));
+            productRepository.save(new Product(categories.get("food").getId(), "认养一头牛 纯牛奶 250ml×24盒", "认养一头牛 纯牛奶 250ml×24盒", "Brand", new BigDecimal("49.9"), 219, "https://images.pexels.com/photos/12420819/pexels-photo-12420819.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 701));
+            productRepository.save(new Product(categories.get("food").getId(), "北海牧场 酸奶 200g×12杯", "北海牧场 酸奶 200g×12杯", "Brand", new BigDecimal("109.9"), 235, "https://images.pexels.com/photos/4641957/pexels-photo-4641957.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 751));
+            productRepository.save(new Product(categories.get("food").getId(), "桂格 即食燕麦片 1.5kg", "桂格 即食燕麦片 1.5kg", "Brand", new BigDecimal("169.9"), 246, "https://images.pexels.com/photos/30501878/pexels-photo-30501878.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 592));
+            productRepository.save(new Product(categories.get("food").getId(), "汤臣倍健 蛋白粉 450g", "汤臣倍健 蛋白粉 450g", "Brand", new BigDecimal("169.9"), 94, "https://images.pexels.com/photos/5904234/pexels-photo-5904234.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 288));
+            productRepository.save(new Product(categories.get("food").getId(), "东方树叶 茉莉花茶 500ml×15", "东方树叶 茉莉花茶 500ml×15", "Brand", new BigDecimal("69.9"), 105, "https://images.pexels.com/photos/34945089/pexels-photo-34945089.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 435));
+            productRepository.save(new Product(categories.get("food").getId(), "农夫山泉 矿泉水 550ml×24", "农夫山泉 矿泉水 550ml×24", "Brand", new BigDecimal("159.9"), 214, "https://images.pexels.com/photos/6391524/pexels-photo-6391524.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 177));
+            productRepository.save(new Product(categories.get("food").getId(), "青岛啤酒 经典1903 500ml×12", "青岛啤酒 经典1903 500ml×12", "Brand", new BigDecimal("99.9"), 211, "https://images.pexels.com/photos/5537952/pexels-photo-5537952.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 776));
+            productRepository.save(new Product(categories.get("food").getId(), "锐澳 微醺鸡尾酒 330ml×8", "锐澳 微醺鸡尾酒 330ml×8", "Brand", new BigDecimal("1809.9"), 34, "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 95));
+            productRepository.save(new Product(categories.get("food").getId(), "茅台 飞天53度 500ml", "茅台 飞天53度 500ml", "Brand", new BigDecimal("2309.9"), 20, "https://images.pexels.com/photos/30770256/pexels-photo-30770256.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 191));
+            productRepository.save(new Product(categories.get("food").getId(), "奈雪的茶 茉莉初雪 茶包 15袋", "奈雪的茶 茉莉初雪 茶包 15袋", "Brand", new BigDecimal("49.9"), 157, "https://images.pexels.com/photos/6391524/pexels-photo-6391524.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 404));
+            productRepository.save(new Product(categories.get("food").getId(), "小猪呵呵 午餐肉 340g", "小猪呵呵 午餐肉 340g", "Brand", new BigDecimal("69.9"), 214, "https://images.pexels.com/photos/34945089/pexels-photo-34945089.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 585));
+            productRepository.save(new Product(categories.get("food").getId(), "沃隆 每日坚果 礼盒装 1kg", "沃隆 每日坚果 礼盒装 1kg", "Brand", new BigDecimal("39.9"), 112, "https://images.pexels.com/photos/5507656/pexels-photo-5507656.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 863));
         }
         List<Product> products = productRepository.findAll();
-        return Map.of(
-                "phone", findProduct(products, "Aurora Phone 15"),
-                "case", findProduct(products, "MagSafe Phone Case"),
-                "charger", findProduct(products, "GaN Fast Charger"),
-                "headphones", findProduct(products, "Wireless Headphones"),
-                "laptop", findProduct(products, "FeatherBook Pro"),
-                "keyboard", findProduct(products, "Tactile Mechanical Keyboard"),
-                "mouse", findProduct(products, "Silent Wireless Mouse")
-        );
+        Map<String, Product> prodMap = new LinkedHashMap<>();
+        for (Product p : products) prodMap.put(p.getName(), p);
+        return prodMap;
     }
 
     private void seedBehaviors(Map<String, User> users, Map<String, Product> products) {
-        if (userBehaviorRepository.count() > 0) {
-            return;
+        if (userBehaviorRepository.count() > 0) return;
+        var rng = new java.util.Random();
+        var names = new java.util.ArrayList<>(products.keySet());
+        String[] uns = {"alice","bob","carol"};
+        for (String un : uns) {
+            User u = users.get(un);
+            for (int i = 0; i < 15; i++) {
+                Product p = products.get(names.get(rng.nextInt(names.size())));
+                behaviorService.recordView(u.getId(), p.getId());
+                if (rng.nextDouble() < 0.3) behaviorService.recordCart(u.getId(), p.getId());
+                if (rng.nextDouble() < 0.15) behaviorService.recordOrder(u.getId(), p.getId());
+            }
         }
-        behaviorService.recordView(users.get("alice").getId(), products.get("phone").getId());
-        behaviorService.recordCart(users.get("alice").getId(), products.get("case").getId());
-        behaviorService.recordOrder(users.get("alice").getId(), products.get("charger").getId());
+    }
 
-        behaviorService.recordOrder(users.get("bob").getId(), products.get("phone").getId());
-        behaviorService.recordCart(users.get("bob").getId(), products.get("case").getId());
-        behaviorService.recordView(users.get("bob").getId(), products.get("headphones").getId());
-
-        behaviorService.recordOrder(users.get("carol").getId(), products.get("laptop").getId());
-        behaviorService.recordCart(users.get("carol").getId(), products.get("keyboard").getId());
-        behaviorService.recordView(users.get("carol").getId(), products.get("mouse").getId());
+    private static final java.util.Map<String,String> IMG = new java.util.HashMap<>();
+    static {
+        IMG.put("iPhone 15 Pro Max", "https://images.pexels.com/photos/3945672/pexels-photo-3945672.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 Mate 60 Pro", "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 14 Ultra", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("OPPO Find X7 Ultra", "https://images.pexels.com/photos/20074768/pexels-photo-20074768.jpeg?w=400&h=300&fit=crop");
+        IMG.put("vivo X100 Pro", "https://images.pexels.com/photos/35229446/pexels-photo-35229446.jpeg?w=400&h=300&fit=crop");
+        IMG.put("三星 Galaxy S24 Ultra", "https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?w=400&h=300&fit=crop");
+        IMG.put("一加 12", "https://images.pexels.com/photos/10343713/pexels-photo-10343713.jpeg?w=400&h=300&fit=crop");
+        IMG.put("荣耀 Magic6 Pro", "https://images.pexels.com/photos/34391717/pexels-photo-34391717.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Nova 12 Ultra", "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop");
+        IMG.put("AirPods Pro 2", "https://images.pexels.com/photos/3921845/pexels-photo-3921845.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 FreeBuds Pro 3", "https://images.pexels.com/photos/14741306/pexels-photo-14741306.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 Buds 4 Pro", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Apple Watch Ultra 2", "https://images.pexels.com/photos/5083218/pexels-photo-5083218.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 Watch GT 4", "https://images.pexels.com/photos/5083218/pexels-photo-5083218.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米手环 8 Pro", "https://images.pexels.com/photos/6516206/pexels-photo-6516206.jpeg?w=400&h=300&fit=crop");
+        IMG.put("iPad Air M2", "https://images.pexels.com/photos/10535365/pexels-photo-10535365.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 MatePad Pro 13.2", "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米平板 6S Pro", "https://images.pexels.com/photos/6913311/pexels-photo-6913311.jpeg?w=400&h=300&fit=crop");
+        IMG.put("ANKER 65W 氮化镓充电器", "https://images.pexels.com/photos/1028674/pexels-photo-1028674.jpeg?w=400&h=300&fit=crop");
+        IMG.put("闪迪 256GB TF 存储卡", "https://images.pexels.com/photos/2147082/pexels-photo-2147082.jpeg?w=400&h=300&fit=crop");
+        IMG.put("绿联 手机支架 桌面", "https://images.pexels.com/photos/34882934/pexels-photo-34882934.jpeg?w=400&h=300&fit=crop");
+        IMG.put("大疆 Osmo Mobile 6", "https://images.pexels.com/photos/6732203/pexels-photo-6732203.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Sony WH-1000XM5", "https://images.pexels.com/photos/37668074/pexels-photo-37668074.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Bose QC Ultra", "https://images.pexels.com/photos/29617989/pexels-photo-29617989.jpeg?w=400&h=300&fit=crop");
+        IMG.put("JBL Flip 6", "https://images.pexels.com/photos/20285556/pexels-photo-20285556.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Kindle Paperwhite 5", "https://images.pexels.com/photos/18313245/pexels-photo-18313245.jpeg?w=400&h=300&fit=crop");
+        IMG.put("GoPro Hero 12 Black", "https://images.pexels.com/photos/8799699/pexels-photo-8799699.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Insta360 X4", "https://images.pexels.com/photos/6630001/pexels-photo-6630001.jpeg?w=400&h=300&fit=crop");
+        IMG.put("MacBook Pro 14 M3", "https://images.pexels.com/photos/10655906/pexels-photo-10655906.jpeg?w=400&h=300&fit=crop");
+        IMG.put("ThinkPad X1 Carbon Gen 12", "https://images.pexels.com/photos/3550482/pexels-photo-3550482.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华硕 ROG 枪神8", "https://images.pexels.com/photos/12877878/pexels-photo-12877878.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 MateBook X Pro 2024", "https://images.pexels.com/photos/33118984/pexels-photo-33118984.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 Book Pro 16", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Dell U2724D", "https://images.pexels.com/photos/9539073/pexels-photo-9539073.jpeg?w=400&h=300&fit=crop");
+        IMG.put("LG 27GR95UM", "https://images.pexels.com/photos/31726554/pexels-photo-31726554.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Samsung ViewFinity S9", "https://images.pexels.com/photos/214488/pexels-photo-214488.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Logitech MX Master 3S", "https://images.pexels.com/photos/7006949/pexels-photo-7006949.jpeg?w=400&h=300&fit=crop");
+        IMG.put("雷蛇 DeathAdder V3 Pro", "https://images.pexels.com/photos/30641697/pexels-photo-30641697.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Keychron Q1 Pro", "https://images.pexels.com/photos/28534977/pexels-photo-28534977.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Cherry MX Board 3.0S", "https://images.pexels.com/photos/8180524/pexels-photo-8180524.jpeg?w=400&h=300&fit=crop");
+        IMG.put("罗技 G Pro X 耳机", "https://images.pexels.com/photos/210927/pexels-photo-210927.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Blue Yeti X USB 麦克风", "https://images.pexels.com/photos/37976280/pexels-photo-37976280.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Samsung T7 Shield 2TB", "https://images.pexels.com/photos/214488/pexels-photo-214488.jpeg?w=400&h=300&fit=crop");
+        IMG.put("WD My Book 12TB", "https://images.pexels.com/photos/10182867/pexels-photo-10182867.jpeg?w=400&h=300&fit=crop");
+        IMG.put("群晖 DS224+", "https://images.pexels.com/photos/37283954/pexels-photo-37283954.jpeg?w=400&h=300&fit=crop");
+        IMG.put("TP-Link AXE5400", "https://images.pexels.com/photos/18446979/pexels-photo-18446979.jpeg?w=400&h=300&fit=crop");
+        IMG.put("华为 AX6", "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop");
+        IMG.put("明基 ScreenBar Halo", "https://images.pexels.com/photos/34619007/pexels-photo-34619007.jpeg?w=400&h=300&fit=crop");
+        IMG.put("爱格升 LX 显示器支架", "https://images.pexels.com/photos/326512/pexels-photo-326512.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Herman Miller Aeron", "https://images.pexels.com/photos/3968051/pexels-photo-3968051.jpeg?w=400&h=300&fit=crop");
+        IMG.put("网易严选 人体工学椅", "https://images.pexels.com/photos/31726674/pexels-photo-31726674.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Wacom Intuos Pro M", "https://images.pexels.com/photos/301792/pexels-photo-301792.jpeg?w=400&h=300&fit=crop");
+        IMG.put("罗技 StreamCam", "https://images.pexels.com/photos/35078392/pexels-photo-35078392.jpeg?w=400&h=300&fit=crop");
+        IMG.put("APC Back-UPS 650", "https://images.pexels.com/photos/11349464/pexels-photo-11349464.jpeg?w=400&h=300&fit=crop");
+        IMG.put("绿联 雷电4 扩展坞", "https://images.pexels.com/photos/34882934/pexels-photo-34882934.jpeg?w=400&h=300&fit=crop");
+        IMG.put("微软 Surface Pro 10", "https://images.pexels.com/photos/1181207/pexels-photo-1181207.jpeg?w=400&h=300&fit=crop");
+        IMG.put("戴森 V15 Detect", "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 扫拖机器人 X20+", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("戴森 Airwrap HS05", "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop");
+        IMG.put("飞利浦 空气炸锅 HD9651", "https://images.pexels.com/photos/35285814/pexels-photo-35285814.jpeg?w=400&h=300&fit=crop");
+        IMG.put("德龙 ECAM23.460 全自动咖啡机", "https://images.pexels.com/photos/6612594/pexels-photo-6612594.jpeg?w=400&h=300&fit=crop");
+        IMG.put("松下 SR-HBC184 电饭煲", "https://images.pexels.com/photos/25242875/pexels-photo-25242875.jpeg?w=400&h=300&fit=crop");
+        IMG.put("九阳 DJ13B-D08EC 豆浆机", "https://images.pexels.com/photos/35261867/pexels-photo-35261867.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Bose SoundLink Max", "https://images.pexels.com/photos/29617989/pexels-photo-29617989.jpeg?w=400&h=300&fit=crop");
+        IMG.put("戴森 Pure Cool 空气净化风扇", "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Aqara 智能窗帘电机 C3", "https://images.pexels.com/photos/25473948/pexels-photo-25473948.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Yeelight 智能吸顶灯 Pro", "https://images.pexels.com/photos/19701594/pexels-photo-19701594.jpeg?w=400&h=300&fit=crop");
+        IMG.put("德业 DYD-T22A3 除湿机", "https://images.pexels.com/photos/34314973/pexels-photo-34314973.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 空气净化器 4 Pro", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("MUJI 超声波香薰机", "https://images.pexels.com/photos/26732084/pexels-photo-26732084.jpeg?w=400&h=300&fit=crop");
+        IMG.put("象印 SM-SG48 保温杯", "https://images.pexels.com/photos/10361760/pexels-photo-10361760.jpeg?w=400&h=300&fit=crop");
+        IMG.put("水星家纺 95鹅绒被", "https://images.pexels.com/photos/2344867/pexels-photo-2344867.jpeg?w=400&h=300&fit=crop");
+        IMG.put("天堂 晴雨伞 三折", "https://images.pexels.com/photos/29725599/pexels-photo-29725599.jpeg?w=400&h=300&fit=crop");
+        IMG.put("3M 净水器 SDW8000", "https://images.pexels.com/photos/3992946/pexels-photo-3992946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 电热水壶 2", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Bruno 多功能料理锅", "https://images.pexels.com/photos/36988958/pexels-photo-36988958.jpeg?w=400&h=300&fit=crop");
+        IMG.put("美的 M1-L213C 微波炉", "https://images.pexels.com/photos/31570615/pexels-photo-31570615.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Nike Air Zoom Pegasus 40", "https://images.pexels.com/photos/2043476/pexels-photo-2043476.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Adidas Ultraboost Light", "https://images.pexels.com/photos/11883282/pexels-photo-11883282.jpeg?w=400&h=300&fit=crop");
+        IMG.put("李宁 超轻21 跑鞋", "https://images.pexels.com/photos/260044/pexels-photo-260044.jpeg?w=400&h=300&fit=crop");
+        IMG.put("安踏 C37 5.0 休闲鞋", "https://images.pexels.com/photos/15059764/pexels-photo-15059764.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Lululemon Align 瑜伽裤", "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Keep 瑜伽垫 TPE", "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Nike Pro 运动内衣", "https://images.pexels.com/photos/2043476/pexels-photo-2043476.jpeg?w=400&h=300&fit=crop");
+        IMG.put("迪卡侬 MH500 登山包", "https://images.pexels.com/photos/1178525/pexels-photo-1178525.jpeg?w=400&h=300&fit=crop");
+        IMG.put("The North Face 羽绒服 96Nuptse", "https://images.pexels.com/photos/37550191/pexels-photo-37550191.jpeg?w=400&h=300&fit=crop");
+        IMG.put("骆驼 露营帐篷 3-4人", "https://images.pexels.com/photos/17192955/pexels-photo-17192955.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Stanley 户外保温箱 15L", "https://images.pexels.com/photos/14974681/pexels-photo-14974681.jpeg?w=400&h=300&fit=crop");
+        IMG.put("YETI Rambler 水壶 769ml", "https://images.pexels.com/photos/8266854/pexels-photo-8266854.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Peloton Bike+ 健身车", "https://images.pexels.com/photos/24244151/pexels-photo-24244151.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小米 走步机 C2", "https://images.pexels.com/photos/10902946/pexels-photo-10902946.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Keep 智能跳绳", "https://images.pexels.com/photos/4108295/pexels-photo-4108295.jpeg?w=400&h=300&fit=crop");
+        IMG.put("哑铃套装 20kg 可调节", "https://images.pexels.com/photos/7743320/pexels-photo-7743320.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Nike 瑜伽训练垫 5mm", "https://images.pexels.com/photos/6246682/pexels-photo-6246682.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Garmin Fenix 7X Pro", "https://images.pexels.com/photos/3999644/pexels-photo-3999644.jpeg?w=400&h=300&fit=crop");
+        IMG.put("佳明 Forerunner 265", "https://images.pexels.com/photos/37894081/pexels-photo-37894081.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Shimano RC7 骑行锁鞋", "https://images.pexels.com/photos/5807638/pexels-photo-5807638.jpeg?w=400&h=300&fit=crop");
+        IMG.put("崔克 Domane AL 4", "https://images.pexels.com/photos/14375828/pexels-photo-14375828.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Speedo Fastskin 泳镜", "https://images.pexels.com/photos/28939350/pexels-photo-28939350.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Arena 游泳训练脚蹼", "https://images.pexels.com/photos/30157150/pexels-photo-30157150.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Wilson NBA 篮球", "https://images.pexels.com/photos/13179883/pexels-photo-13179883.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Yonex 天斧 AX100ZZ", "https://images.pexels.com/photos/11312132/pexels-photo-11312132.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Garmin Edge 540 码表", "https://images.pexels.com/photos/3999644/pexels-photo-3999644.jpeg?w=400&h=300&fit=crop");
+        IMG.put("兰蔻 极光水 150ml", "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop");
+        IMG.put("SK-II 神仙水 230ml", "https://images.pexels.com/photos/10476733/pexels-photo-10476733.jpeg?w=400&h=300&fit=crop");
+        IMG.put("雅诗兰黛 小棕瓶精华 50ml", "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop");
+        IMG.put("海蓝之谜 面霜 60ml", "https://images.pexels.com/photos/6635929/pexels-photo-6635929.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Olay 小白瓶 40ml", "https://images.pexels.com/photos/28847445/pexels-photo-28847445.jpeg?w=400&h=300&fit=crop");
+        IMG.put("珀莱雅 双抗精华 30ml", "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop");
+        IMG.put("迪奥 口红 999 哑光", "https://images.pexels.com/photos/6648498/pexels-photo-6648498.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Tom Ford 黑金唇膏 16", "https://images.pexels.com/photos/5809488/pexels-photo-5809488.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Charlotte Tilbury 枕边话", "https://images.pexels.com/photos/7466181/pexels-photo-7466181.jpeg?w=400&h=300&fit=crop");
+        IMG.put("YSL 小金条 #21", "https://images.pexels.com/photos/29899584/pexels-photo-29899584.jpeg?w=400&h=300&fit=crop");
+        IMG.put("MAC 生姜高光 DoubleGleam", "https://images.pexels.com/photos/39284/pexels-photo-39284.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Jo Malone 蓝风铃 30ml", "https://images.pexels.com/photos/33615818/pexels-photo-33615818.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Diptyque 檀道 75ml", "https://images.pexels.com/photos/2866796/pexels-photo-2866796.jpeg?w=400&h=300&fit=crop");
+        IMG.put("潘海利根 兽首狐狸 75ml", "https://images.pexels.com/photos/7610571/pexels-photo-7610571.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Aesop 赋活芳香护手霜 75ml", "https://images.pexels.com/photos/17788297/pexels-photo-17788297.jpeg?w=400&h=300&fit=crop");
+        IMG.put("卡诗 白金赋活洗发水 250ml", "https://images.pexels.com/photos/33807622/pexels-photo-33807622.jpeg?w=400&h=300&fit=crop");
+        IMG.put("戴森 Supersonic 吹风机", "https://images.pexels.com/photos/36038694/pexels-photo-36038694.jpeg?w=400&h=300&fit=crop");
+        IMG.put("Marvis 牙膏套装 7支", "https://images.pexels.com/photos/3735649/pexels-photo-3735649.jpeg?w=400&h=300&fit=crop");
+        IMG.put("CeraVe 保湿洁面乳 473ml", "https://images.pexels.com/photos/14107358/pexels-photo-14107358.jpeg?w=400&h=300&fit=crop");
+        IMG.put("修丽可 CF 抗氧化精华 30ml", "https://images.pexels.com/photos/7321654/pexels-photo-7321654.jpeg?w=400&h=300&fit=crop");
+        IMG.put("三只松鼠 每日坚果 750g", "https://images.pexels.com/photos/5507656/pexels-photo-5507656.jpeg?w=400&h=300&fit=crop");
+        IMG.put("良品铺子 猪肉脯 500g", "https://images.pexels.com/photos/5237009/pexels-photo-5237009.jpeg?w=400&h=300&fit=crop");
+        IMG.put("瑞士莲 软心巧克力 600g", "https://images.pexels.com/photos/6167328/pexels-photo-6167328.jpeg?w=400&h=300&fit=crop");
+        IMG.put("illy 深度烘焙咖啡粉 250g", "https://images.pexels.com/photos/27528587/pexels-photo-27528587.jpeg?w=400&h=300&fit=crop");
+        IMG.put("瑞幸 冻干咖啡粉 12颗", "https://images.pexels.com/photos/5574070/pexels-photo-5574070.jpeg?w=400&h=300&fit=crop");
+        IMG.put("永璞 闪萃咖啡液 14杯", "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop");
+        IMG.put("认养一头牛 纯牛奶 250ml×24盒", "https://images.pexels.com/photos/12420819/pexels-photo-12420819.jpeg?w=400&h=300&fit=crop");
+        IMG.put("安佳 全脂奶粉 1kg", "https://images.pexels.com/photos/37424061/pexels-photo-37424061.jpeg?w=400&h=300&fit=crop");
+        IMG.put("北海牧场 酸奶 200g×12杯", "https://images.pexels.com/photos/4641957/pexels-photo-4641957.jpeg?w=400&h=300&fit=crop");
+        IMG.put("桂格 即食燕麦片 1.5kg", "https://images.pexels.com/photos/30501878/pexels-photo-30501878.jpeg?w=400&h=300&fit=crop");
+        IMG.put("汤臣倍健 蛋白粉 450g", "https://images.pexels.com/photos/5904234/pexels-photo-5904234.jpeg?w=400&h=300&fit=crop");
+        IMG.put("东方树叶 茉莉花茶 500ml×15", "https://images.pexels.com/photos/34945089/pexels-photo-34945089.jpeg?w=400&h=300&fit=crop");
+        IMG.put("农夫山泉 矿泉水 550ml×24", "https://images.pexels.com/photos/6391524/pexels-photo-6391524.jpeg?w=400&h=300&fit=crop");
+        IMG.put("青岛啤酒 经典1903 500ml×12", "https://images.pexels.com/photos/5537952/pexels-photo-5537952.jpeg?w=400&h=300&fit=crop");
+        IMG.put("奔富 Bin 389 干红 750ml", "https://images.pexels.com/photos/16055974/pexels-photo-16055974.jpeg?w=400&h=300&fit=crop");
+        IMG.put("锐澳 微醺鸡尾酒 330ml×8", "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop");
+        IMG.put("茅台 飞天53度 500ml", "https://images.pexels.com/photos/30770256/pexels-photo-30770256.jpeg?w=400&h=300&fit=crop");
+        IMG.put("奈雪的茶 茉莉初雪 茶包 15袋", "https://images.pexels.com/photos/6391524/pexels-photo-6391524.jpeg?w=400&h=300&fit=crop");
+        IMG.put("小猪呵呵 午餐肉 340g", "https://images.pexels.com/photos/34945089/pexels-photo-34945089.jpeg?w=400&h=300&fit=crop");
+        IMG.put("沃隆 每日坚果 礼盒装 1kg", "https://images.pexels.com/photos/5507656/pexels-photo-5507656.jpeg?w=400&h=300&fit=crop");
     }
 
     private Product product(Category category, String slug, String name, String description, String brand,
                             String price, int stock, int salesCount) {
+        String img = IMG.get(name);
+        if (img == null) img = "https://picsum.photos/seed/" + slug + "/640/480";
         return new Product(category.getId(), name, description, brand, new BigDecimal(price), stock,
-                "https://picsum.photos/seed/" + slug + "/640/480",
+                img,
                 ProductStatus.ON_SALE, salesCount);
     }
 

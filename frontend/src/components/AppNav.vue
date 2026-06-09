@@ -25,12 +25,22 @@
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
+import { watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useCartStore } from '../stores/cart'
 
 const router = useRouter()
 const auth = useAuthStore()
 const cart = useCartStore()
+
+// 登录后自动加载购物车，退出后自动清空
+watch(() => auth.token, (newToken) => {
+  if (newToken && !auth.isAdmin) {
+    cart.load()
+  } else if (!newToken) {
+    cart.clear()
+  }
+}, { immediate: true })
 
 function logout() {
   auth.logout()

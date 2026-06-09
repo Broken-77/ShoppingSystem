@@ -29,6 +29,9 @@
             <input v-model.number="quantity" type="number" min="1" :max="product.stock" />
           </label>
           <button class="primary-button" type="button" @click="addToCart">加入购物车</button>
+          <button class="primary-button" type="button" :disabled="buying" @click="buyNow">
+            {{ buying ? '提交中...' : '立即购买' }}
+          </button>
         </div>
         <p v-if="message" :class="failed ? 'error' : 'success'">{{ message }}</p>
       </div>
@@ -55,6 +58,8 @@ import ProductCard from '../../components/ProductCard.vue'
 import { getProduct, similarProducts } from '../../api/products'
 import { useCartStore } from '../../stores/cart'
 import { useAuthStore } from '../../stores/auth'
+import { createOrderFromSelected } from '../../api/orders'
+import { addCartItem } from '../../api/cart'
 
 const route = useRoute()
 const router = useRouter()
@@ -65,6 +70,7 @@ const similar = ref([])
 const quantity = ref(1)
 const message = ref('')
 const failed = ref(false)
+const buying = ref(false)
 
 async function load() {
   product.value = await getProduct(route.params.id)
@@ -84,6 +90,27 @@ async function addToCart() {
   } catch (err) {
     failed.value = true
     message.value = err.response?.data?.message || '加入购物车失败'
+  }
+}
+
+async function buyNow() {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  buying.value = true
+  message.value = ''
+  failed.value = false
+  try {
+    const added = await addCartItem(product.value.id, quantity.value)
+    const order = await createOrderFromSelected([added.id])
+    await cart.load()
+    router.push(`/orders/${order.id}`)
+  } catch (err) {
+    failed.value = true
+    message.value = err.response?.data?.message || '购买失败'
+  } finally {
+    buying.value = false
   }
 }
 

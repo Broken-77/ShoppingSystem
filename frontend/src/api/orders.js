@@ -12,6 +12,10 @@ export async function createOrder() {
   return unwrap(await api.post('/orders'))
 }
 
+export async function createOrderFromSelected(cartItemIds) {
+  return unwrap(await api.post('/orders/selected', { cartItemIds }))
+}
+
 export async function payOrder(id) {
   return unwrap(await api.post(`/orders/${id}/pay`))
 }
