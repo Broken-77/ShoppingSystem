@@ -18,6 +18,7 @@ public final class OrderDtos {
             Long id,
             String orderNo,
             Long userId,
+            String username,
             BigDecimal totalAmount,
             OrderStatus status,
             Instant createdAt,
@@ -29,6 +30,21 @@ public final class OrderDtos {
                     order.getId(),
                     order.getOrderNo(),
                     order.getUserId(),
+                    null,
+                    order.getTotalAmount(),
+                    order.getStatus(),
+                    order.getCreatedAt(),
+                    order.getPaidAt(),
+                    items.stream().map(OrderItemResponse::from).toList()
+            );
+        }
+
+        public static OrderResponse from(Order order, List<OrderItem> items, String username) {
+            return new OrderResponse(
+                    order.getId(),
+                    order.getOrderNo(),
+                    order.getUserId(),
+                    username,
                     order.getTotalAmount(),
                     order.getStatus(),
                     order.getCreatedAt(),
