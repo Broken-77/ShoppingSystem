@@ -34,8 +34,20 @@
       </form>
     </div>
 
-    <div v-if="visibleProducts.length" class="grid">
-      <ProductCard v-for="product in visibleProducts" :key="product.id" :product="product" />
+    <div v-if="visibleProducts.length" class="stack">
+      <div class="grid">
+        <ProductCard v-for="product in pagedProducts" :key="product.id" :product="product" />
+      </div>
+      <div class="pagination-bar">
+        <p class="muted">
+          第 {{ pageStart }}-{{ pageEnd }} 件 / 共 {{ visibleProducts.length }} 件
+        </p>
+        <div class="pagination-controls">
+          <button type="button" :disabled="currentPage === 1" @click="currentPage -= 1">上一页</button>
+          <span>{{ currentPage }} / {{ totalPages }}</span>
+          <button type="button" :disabled="currentPage === totalPages" @click="currentPage += 1">下一页</button>
+        </div>
+      </div>
     </div>
     <div v-else class="empty-state">
       <h2>没有找到商品</h2>
@@ -45,12 +57,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ProductCard from '../../components/ProductCard.vue'
 import { listCategories, listProducts } from '../../api/products'
+import { clampPage, pageCount, paginateItems } from '../../utils/pagination.mjs'
 
+const PAGE_SIZE = 25
 const categories = ref([])
 const products = ref([])
+const currentPage = ref(1)
 const filters = reactive({
   keyword: '',
   categoryId: '',
@@ -67,11 +82,21 @@ const visibleProducts = computed(() => {
   })
 })
 
+const totalPages = computed(() => pageCount(visibleProducts.value.length, PAGE_SIZE))
+const pagedProducts = computed(() => paginateItems(visibleProducts.value, currentPage.value, PAGE_SIZE))
+const pageStart = computed(() => visibleProducts.value.length ? (currentPage.value - 1) * PAGE_SIZE + 1 : 0)
+const pageEnd = computed(() => Math.min(currentPage.value * PAGE_SIZE, visibleProducts.value.length))
+
+watch(visibleProducts, () => {
+  currentPage.value = clampPage(currentPage.value, visibleProducts.value.length, PAGE_SIZE)
+})
+
 async function loadProducts() {
   products.value = await listProducts({
     keyword: filters.keyword || undefined,
     categoryId: filters.categoryId || undefined
   })
+  currentPage.value = 1
 }
 
 onMounted(async () => {

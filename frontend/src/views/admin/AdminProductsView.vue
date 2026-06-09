@@ -71,7 +71,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="product in products" :key="product.id">
+            <tr v-for="product in pagedProducts" :key="product.id">
               <td>
                 <div class="cart-product">
                   <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" />
@@ -101,12 +101,23 @@
           </tbody>
         </table>
       </div>
+
+      <div v-if="products.length" class="pagination-bar">
+        <p class="muted">
+          第 {{ pageStart }}-{{ pageEnd }} 条 / 共 {{ products.length }} 条
+        </p>
+        <div class="pagination-controls">
+          <button type="button" :disabled="currentPage === 1" @click="currentPage -= 1">上一页</button>
+          <span>{{ currentPage }} / {{ totalPages }}</span>
+          <button type="button" :disabled="currentPage === totalPages" @click="currentPage += 1">下一页</button>
+        </div>
+      </div>
     </section>
   </AdminLayout>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AdminLayout from '../../components/AdminLayout.vue'
 import {
   createAdminProduct,
@@ -116,12 +127,15 @@ import {
   markProductOnSale,
   updateAdminProduct
 } from '../../api/admin'
+import { clampPage, pageCount, paginateItems } from '../../utils/pagination.mjs'
 
+const PAGE_SIZE = 20
 const products = ref([])
 const categories = ref([])
 const editingId = ref(null)
 const message = ref('')
 const failed = ref(false)
+const currentPage = ref(1)
 
 const emptyForm = {
   categoryId: '',
@@ -136,6 +150,15 @@ const emptyForm = {
 }
 
 const form = reactive({ ...emptyForm })
+
+const totalPages = computed(() => pageCount(products.value.length, PAGE_SIZE))
+const pagedProducts = computed(() => paginateItems(products.value, currentPage.value, PAGE_SIZE))
+const pageStart = computed(() => products.value.length ? (currentPage.value - 1) * PAGE_SIZE + 1 : 0)
+const pageEnd = computed(() => Math.min(currentPage.value * PAGE_SIZE, products.value.length))
+
+watch(products, () => {
+  currentPage.value = clampPage(currentPage.value, products.value.length, PAGE_SIZE)
+})
 
 function categoryName(id) {
   return categories.value.find((category) => category.id === id)?.name || `分类 #${id}`
@@ -170,6 +193,7 @@ async function load() {
   ])
   products.value = productRows
   categories.value = categoryRows
+  currentPage.value = clampPage(currentPage.value, productRows.length, PAGE_SIZE)
 }
 
 async function save() {

@@ -614,6 +614,38 @@ main {
   gap: 10px;
 }
 
+.pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px 0;
+}
+
+.pagination-bar p {
+  margin: 0;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-controls span {
+  min-width: 64px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .empty-state {
   display: grid;
   place-items: center;
