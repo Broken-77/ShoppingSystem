@@ -1,5 +1,7 @@
 package com.wms.shoppingsys.auth;
 
+import com.wms.shoppingsys.service.AuthService;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;

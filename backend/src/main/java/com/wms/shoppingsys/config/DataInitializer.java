@@ -1,16 +1,16 @@
 package com.wms.shoppingsys.config;
 
-import com.wms.shoppingsys.catalog.Category;
-import com.wms.shoppingsys.catalog.CategoryRepository;
-import com.wms.shoppingsys.catalog.Product;
-import com.wms.shoppingsys.catalog.ProductRepository;
-import com.wms.shoppingsys.catalog.ProductStatus;
-import com.wms.shoppingsys.recommendation.BehaviorService;
-import com.wms.shoppingsys.recommendation.UserBehaviorRepository;
-import com.wms.shoppingsys.user.User;
-import com.wms.shoppingsys.user.UserRepository;
-import com.wms.shoppingsys.user.UserRole;
-import com.wms.shoppingsys.user.UserStatus;
+import com.wms.shoppingsys.entity.Category;
+import com.wms.shoppingsys.repository.CategoryRepository;
+import com.wms.shoppingsys.entity.Product;
+import com.wms.shoppingsys.repository.ProductRepository;
+import com.wms.shoppingsys.enums.ProductStatus;
+import com.wms.shoppingsys.service.BehaviorService;
+import com.wms.shoppingsys.repository.UserBehaviorRepository;
+import com.wms.shoppingsys.entity.User;
+import com.wms.shoppingsys.repository.UserRepository;
+import com.wms.shoppingsys.enums.UserRole;
+import com.wms.shoppingsys.enums.UserStatus;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
