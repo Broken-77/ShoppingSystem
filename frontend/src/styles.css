@@ -942,3 +942,10 @@ button:disabled {
     min-height: 320px;
   }
 }
+
+/* ── 评价星星 ── */
+.stars { color: #f59e0b; font-size: 18px; letter-spacing: 2px; display: inline; }
+.stars-off { color: #d1d5db; display: inline; }
+.star-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0; color: #f59e0b; }
+.review-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
+.cart-checkbox { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }

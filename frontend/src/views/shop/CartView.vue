@@ -13,7 +13,7 @@
         <thead>
           <tr>
             <th style="width:40px">
-              <input type="checkbox" :checked="allSelected" @change="toggleAll" />
+              <input class="cart-checkbox" type="checkbox" :checked="allSelected" @change="toggleAll" />
             </th>
             <th>商品</th>
             <th>数量</th>
@@ -24,7 +24,7 @@
         <tbody>
           <tr v-for="item in cart.items" :key="item.id" :class="{ selected: selected.has(item.id) }">
             <td>
-              <input type="checkbox" :checked="selected.has(item.id)" @change="toggleOne(item.id)" />
+              <input class="cart-checkbox" type="checkbox" :checked="selected.has(item.id)" @change="toggleOne(item.id)" />
             </td>
             <td>
               <div class="cart-product">

@@ -28,17 +28,19 @@
           <thead>
             <tr>
               <th>商品</th>
-              <th>单价</th>
               <th>数量</th>
               <th>小计</th>
+              <th>评价</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in order.items" :key="item.id">
               <td>{{ item.productName }}</td>
-              <td>¥{{ item.price }}</td>
               <td>{{ item.quantity }}</td>
               <td>¥{{ item.subtotal }}</td>
+              <td>
+                <RouterLink class="secondary-button" :to="`/products/${item.productId}`">评价</RouterLink>
+              </td>
             </tr>
           </tbody>
         </table>

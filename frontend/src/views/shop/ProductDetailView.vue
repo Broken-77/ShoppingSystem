@@ -44,28 +44,35 @@
           <p class="muted">{{ reviews.length }} 条评价</p>
         </div>
       </div>
-      <div v-if="reviews.length" class="stack">
-        <article v-for="r in reviews" :key="r.id" class="review-item" style="border-bottom:1px solid var(--border);padding:12px 0">
+      <div v-if="reviewGroups.length" class="stack">
+        <article v-for="g in reviewGroups" :key="g.key" class="review-item">
           <div style="display:flex;justify-content:space-between">
-            <strong>{{ r.username }}</strong>
-            <span style="color:gold">{{ '★'.repeat(r.rating) }}{{ '☆'.repeat(5-r.rating) }}</span>
+            <strong>{{ g.username }}</strong>
+            <span class="stars">{{ '★'.repeat(g.main.rating) }}<span class="stars-off">{{ '★'.repeat(5-g.main.rating) }}</span></span>
           </div>
-          <p v-if="r.comment" style="margin-top:4px">{{ r.comment }}</p>
-          <p class="muted" style="font-size:12px">{{ formatTime(r.createdAt) }}</p>
+          <p v-if="g.main.comment" style="margin-top:4px">{{ g.main.comment }}</p>
+          <p class="muted" style="font-size:12px">{{ formatTime(g.main.createdAt) }}</p>
+          <div v-for="r in g.replies" :key="r.id" style="margin-left:16px;margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px;font-size:13px;color:#555">
+            <p>{{ r.comment }}</p>
+            <p class="muted" style="font-size:11px">{{ formatTime(r.createdAt) }}</p>
+          </div>
+          <button v-if="auth.isLoggedIn && g.username === auth.username && !showReply[g.key]" type="button" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;padding:4px 0;margin-top:4px" @click="showReply[g.key]=true">追评</button>
+          <div v-if="showReply[g.key]" style="margin-top:6px">
+            <textarea v-model="replyText[g.key]" placeholder="补充体验" rows="2" style="width:100%;font-size:13px;margin-bottom:4px"></textarea>
+            <button class="secondary-button" :disabled="replying" @click="submitReply(g.main.id)">{{ replying?'提交中':'提交追评' }}</button>
+            <button type="button" @click="showReply[g.key]=false" style="background:none;border:none;color:#999;cursor:pointer;margin-left:8px">取消</button>
+          </div>
         </article>
       </div>
       <div v-else class="empty-state"><p class="muted">暂无评价，购买后可以评价</p></div>
-      <div v-if="auth.isLoggedIn" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+      <div v-if="auth.isLoggedIn && !hasMainReview" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
         <p class="muted" style="margin-bottom:8px">发表评价</p>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <button v-for="s in 5" :key="s" type="button" @click="rating = s" 
-            style="background:none;border:none;font-size:20px;cursor:pointer;padding:0">
-            {{ s <= rating ? '★' : '☆' }}
-          </button>
+          <button v-for="s in 5" :key="s" type="button" @click="rating=s" class="star-btn">{{ s<=rating?'★':'☆' }}</button>
         </div>
-        <textarea v-model="reviewText" placeholder="分享你的使用体验（可选）" rows="2" style="width:100%;margin-bottom:8px"></textarea>
-        <button class="primary-button" :disabled="submitting" @click="submitReview">{{ submitting ? '提交中' : '提交评价' }}</button>
-        <p v-if="reviewMsg" :class="reviewFailed ? 'error' : 'success'" style="margin-top:4px">{{ reviewMsg }}</p>
+        <textarea v-model="reviewText" placeholder="分享使用体验（可选）" rows="2" style="width:100%;margin-bottom:8px"></textarea>
+        <button class="primary-button" :disabled="submitting" @click="submitReview">{{ submitting?'提交中':'提交评价' }}</button>
+        <p v-if="reviewMsg" :class="reviewFailed?'error':'success'" style="margin-top:4px">{{ reviewMsg }}</p>
       </div>
     </section>
 
@@ -84,14 +91,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProductCard from '../../components/ProductCard.vue'
 import { getProduct, similarProducts } from '../../api/products'
 import { useCartStore } from '../../stores/cart'
 import { useAuthStore } from '../../stores/auth'
 import { createDirectOrder } from '../../api/orders'
-import { getReviews, createReview } from '../../api/reviews'
+import { getReviews, createReview, replyReview } from '../../api/reviews'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,6 +118,24 @@ const reviewText = ref('')
 const submitting = ref(false)
 const reviewMsg = ref('')
 const reviewFailed = ref(false)
+const replying = ref(false)
+const showReply = ref({})
+const replyText = ref({})
+
+const reviewGroups = computed(() => {
+  const groups = []
+  for (const r of reviews.value) {
+    if (r.rating === 0) continue
+    const key = r.userId + ':' + r.productId
+    const replies = reviews.value.filter(r2 => r2.rating === 0 && r2.userId === r.userId)
+    groups.push({ key, username: r.username, main: r, replies })
+  }
+  return groups
+})
+
+const hasMainReview = computed(() =>
+  reviews.value.some(r => r.username === auth.username && r.rating > 0)
+)
 
 async function load() {
   product.value = await getProduct(route.params.id)
@@ -169,6 +194,25 @@ async function submitReview() {
     reviewMsg.value = err.response?.data?.message || '评价失败'
   } finally {
     submitting.value = false
+  }
+}
+
+async function submitReply(parentId) {
+  replying.value = true
+  reviewMsg.value = ''
+  reviewFailed.value = false
+  const g = reviewGroups.value.find(g => g.main.id === parentId)
+  const key = g ? g.key : null
+  try {
+    await replyReview(parentId, (replyText.value[key] || '').trim())
+    replyText.value[key] = ''
+    showReply.value[key] = false
+    reviews.value = await getReviews(product.value.id)
+  } catch (err) {
+    reviewFailed.value = true
+    reviewMsg.value = err.response?.data?.message || '追评失败'
+  } finally {
+    replying.value = false
   }
 }
 

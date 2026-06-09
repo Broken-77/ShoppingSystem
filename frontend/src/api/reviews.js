@@ -7,3 +7,7 @@ export async function getReviews(productId) {
 export async function createReview(productId, rating, comment) {
   return unwrap(await api.post('/reviews', { productId, rating, comment }))
 }
+
+export async function replyReview(reviewId, comment) {
+  return unwrap(await api.post(`/reviews/${reviewId}/reply`, { comment }))
+}
