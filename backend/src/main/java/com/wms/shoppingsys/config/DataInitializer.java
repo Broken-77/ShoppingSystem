@@ -79,6 +79,15 @@ public class DataInitializer implements CommandLineRunner {
                     new Category("美妆个护", null, true, 5),
                     new Category("食品饮料", null, true, 6)
             ));
+        } else if (categoryRepository.count() < 6) {
+            // 兼容旧数据库：补全缺少的分类
+            List<Category> existing = categoryRepository.findAll();
+            if (findCategoryOpt(existing, "美妆个护") == null) {
+                categoryRepository.save(new Category("美妆个护", null, true, 5));
+            }
+            if (findCategoryOpt(existing, "食品饮料") == null) {
+                categoryRepository.save(new Category("食品饮料", null, true, 6));
+            }
         }
         List<Category> categories = categoryRepository.findAll();
         return Map.of(
@@ -89,6 +98,13 @@ public class DataInitializer implements CommandLineRunner {
                 "beauty", findCategory(categories, "美妆个护"),
                 "food", findCategory(categories, "食品饮料")
         );
+    }
+
+    private Category findCategoryOpt(List<Category> categories, String name) {
+        return categories.stream()
+                .filter(c -> name.equals(c.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     private Map<String, Product> seedProducts(Map<String, Category> categories) {
