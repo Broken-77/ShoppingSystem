@@ -81,4 +81,7 @@ public final class OrderDtos {
 
     public record CreateOrderRequest(@NotNull List<Long> cartItemIds) {
     }
+
+    public record DirectOrderRequest(@NotNull Long productId, @NotNull Integer quantity) {
+    }
 }

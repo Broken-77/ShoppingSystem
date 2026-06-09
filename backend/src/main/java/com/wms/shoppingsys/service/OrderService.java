@@ -73,6 +73,25 @@ public class OrderService {
     }
 
     @Transactional
+    public Order createDirectOrder(Long userId, Long productId, int quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "数量至少为1");
+        }
+        Product product = productService.getOnSaleProduct(productId);
+        if (quantity > product.getStock()) {
+            throw new BusinessException(ErrorCode.STOCK_NOT_ENOUGH, "库存不足");
+        }
+        BigDecimal total = product.getPrice().multiply(BigDecimal.valueOf(quantity))
+                .setScale(2, RoundingMode.HALF_UP);
+        Order order = orderRepository.save(new Order(generateOrderNo(), userId, total));
+        product.deductStock(quantity);
+        orderItemRepository.save(new OrderItem(order.getId(), product.getId(),
+                product.getName(), product.getPrice(), quantity, total));
+        behaviorRecorder.recordOrder(userId, productId);
+        return order;
+    }
+
+    @Transactional
     public Order createOrderFromSelected(Long userId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "请选择至少一件商品");

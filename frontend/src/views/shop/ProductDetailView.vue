@@ -58,8 +58,7 @@ import ProductCard from '../../components/ProductCard.vue'
 import { getProduct, similarProducts } from '../../api/products'
 import { useCartStore } from '../../stores/cart'
 import { useAuthStore } from '../../stores/auth'
-import { createOrderFromSelected } from '../../api/orders'
-import { addCartItem } from '../../api/cart'
+import { createDirectOrder } from '../../api/orders'
 
 const route = useRoute()
 const router = useRouter()
@@ -102,8 +101,7 @@ async function buyNow() {
   message.value = ''
   failed.value = false
   try {
-    const added = await addCartItem(product.value.id, quantity.value)
-    const order = await createOrderFromSelected([added.id])
+    const order = await createDirectOrder(product.value.id, quantity.value)
     await cart.load()
     router.push(`/orders/${order.id}`)
   } catch (err) {

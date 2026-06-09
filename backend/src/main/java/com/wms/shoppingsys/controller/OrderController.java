@@ -53,6 +53,14 @@ public class OrderController {
         return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
     }
 
+    @PostMapping("/direct")
+    public ApiResponse<OrderDtos.OrderResponse> createDirect(
+            @RequestBody OrderDtos.DirectOrderRequest req, HttpServletRequest request) {
+        CurrentUser user = requireUser(request);
+        Order order = orderService.createDirectOrder(user.id(), req.productId(), req.quantity());
+        return ApiResponse.ok(OrderDtos.OrderResponse.from(order, orderService.getItems(order.getId())));
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<OrderDtos.OrderResponse> detail(@PathVariable Long id, HttpServletRequest request) {
         CurrentUser user = requireUser(request);
