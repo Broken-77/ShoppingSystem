@@ -9,6 +9,7 @@ import CartView from '../views/shop/CartView.vue'
 import CheckoutView from '../views/shop/CheckoutView.vue'
 import OrdersView from '../views/shop/OrdersView.vue'
 import OrderDetailView from '../views/shop/OrderDetailView.vue'
+import AdminUsersView from '../views/admin/AdminUsersView.vue'
 import AdminProductsView from '../views/admin/AdminProductsView.vue'
 import AdminCategoriesView from '../views/admin/AdminCategoriesView.vue'
 import AdminOrdersView from '../views/admin/AdminOrdersView.vue'
@@ -31,7 +32,8 @@ const router = createRouter({
     { path: '/orders/:id', name: 'order-detail', component: OrderDetailView, meta: { requiresAuth: true } },
     { path: '/admin/products', name: 'admin-products', component: AdminProductsView, meta: { requiresAdmin: true } },
     { path: '/admin/categories', name: 'admin-categories', component: AdminCategoriesView, meta: { requiresAdmin: true } },
-    { path: '/admin/orders', name: 'admin-orders', component: AdminOrdersView, meta: { requiresAdmin: true } }
+    { path: '/admin/orders', name: 'admin-orders', component: AdminOrdersView, meta: { requiresAdmin: true } },
+    { path: '/admin/users', name: 'admin-users', component: AdminUsersView, meta: { requiresAdmin: true } }
   ]
 })
 
