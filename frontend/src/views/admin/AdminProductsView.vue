@@ -58,7 +58,20 @@
 
       <p v-if="message" :class="failed ? 'error' : 'success'">{{ message }}</p>
 
-      <div class="table-wrap">
+      <div class="admin-search-bar">
+        <label class="form-row admin-search-field">
+          <span>搜索商品</span>
+          <input
+            v-model="searchQuery"
+            type="search"
+            placeholder="搜索商品名称、品牌或分类"
+            autocomplete="off"
+          />
+        </label>
+        <p class="muted">找到 {{ filteredProducts.length }} 件商品</p>
+      </div>
+
+      <div v-if="filteredProducts.length" class="table-wrap">
         <table class="list-table">
           <thead>
             <tr>
@@ -102,9 +115,14 @@
         </table>
       </div>
 
-      <div v-if="products.length" class="pagination-bar">
+      <div v-else class="empty-state admin-search-empty">
+        <h2>未找到匹配商品</h2>
+        <p class="muted">请尝试其他商品名称、品牌或分类关键词。</p>
+      </div>
+
+      <div v-if="filteredProducts.length" class="pagination-bar">
         <p class="muted">
-          第 {{ pageStart }}-{{ pageEnd }} 条 / 共 {{ products.length }} 条
+          第 {{ pageStart }}-{{ pageEnd }} 条 / 共 {{ filteredProducts.length }} 条
         </p>
         <div class="pagination-controls">
           <button type="button" :disabled="currentPage === 1" @click="currentPage -= 1">上一页</button>
@@ -128,6 +146,7 @@ import {
   updateAdminProduct
 } from '../../api/admin'
 import { clampPage, pageCount, paginateItems } from '../../utils/pagination.mjs'
+import { filterProducts } from '../../utils/productSearch.mjs'
 
 const PAGE_SIZE = 20
 const products = ref([])
@@ -136,6 +155,7 @@ const editingId = ref(null)
 const message = ref('')
 const failed = ref(false)
 const currentPage = ref(1)
+const searchQuery = ref('')
 
 const emptyForm = {
   categoryId: '',
@@ -151,13 +171,18 @@ const emptyForm = {
 
 const form = reactive({ ...emptyForm })
 
-const totalPages = computed(() => pageCount(products.value.length, PAGE_SIZE))
-const pagedProducts = computed(() => paginateItems(products.value, currentPage.value, PAGE_SIZE))
-const pageStart = computed(() => products.value.length ? (currentPage.value - 1) * PAGE_SIZE + 1 : 0)
-const pageEnd = computed(() => Math.min(currentPage.value * PAGE_SIZE, products.value.length))
+const filteredProducts = computed(() => filterProducts(products.value, searchQuery.value, categoryName))
+const totalPages = computed(() => pageCount(filteredProducts.value.length, PAGE_SIZE))
+const pagedProducts = computed(() => paginateItems(filteredProducts.value, currentPage.value, PAGE_SIZE))
+const pageStart = computed(() => filteredProducts.value.length ? (currentPage.value - 1) * PAGE_SIZE + 1 : 0)
+const pageEnd = computed(() => Math.min(currentPage.value * PAGE_SIZE, filteredProducts.value.length))
 
-watch(products, () => {
-  currentPage.value = clampPage(currentPage.value, products.value.length, PAGE_SIZE)
+watch(filteredProducts, () => {
+  currentPage.value = clampPage(currentPage.value, filteredProducts.value.length, PAGE_SIZE)
+})
+
+watch(searchQuery, () => {
+  currentPage.value = 1
 })
 
 function categoryName(id) {
