@@ -75,8 +75,14 @@ public class DataInitializer implements CommandLineRunner {
         User frank = userRepository.findByUsername("frank")
                 .orElseGet(() -> userRepository.save(new User("frank", hashPassword("pass123"),
                         UserRole.USER, UserStatus.ACTIVE)));
+        User grace = userRepository.findByUsername("grace")
+                .orElseGet(() -> userRepository.save(new User("grace", hashPassword("pass123"),
+                        UserRole.USER, UserStatus.ACTIVE)));
+        User helen = userRepository.findByUsername("helen")
+                .orElseGet(() -> userRepository.save(new User("helen", hashPassword("pass123"),
+                        UserRole.USER, UserStatus.ACTIVE)));
         return Map.of("admin", admin, "alice", alice, "bob", bob, "carol", carol,
-                "dave", dave, "eve", eve, "frank", frank);
+                "dave", dave, "eve", eve, "frank", frank, "grace", grace, "helen", helen);
     }
 
     private Map<String, Category> seedCategories() {
@@ -256,7 +262,7 @@ public class DataInitializer implements CommandLineRunner {
             productRepository.save(new Product(categories.get("food").getId(), "三只松鼠 每日坚果 750g", "三只松鼠 每日坚果 750g", "Brand", new BigDecimal("1727"), 152, "https://images.pexels.com/photos/5507656/pexels-photo-5507656.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 489));
             productRepository.save(new Product(categories.get("food").getId(), "良品铺子 猪肉脯 500g", "良品铺子 猪肉脯 500g", "Brand", new BigDecimal("2881.5"), 179, "https://images.pexels.com/photos/5237009/pexels-photo-5237009.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 740));
             productRepository.save(new Product(categories.get("food").getId(), "瑞士莲 软心巧克力 600g", "瑞士莲 软心巧克力 600g", "Brand", new BigDecimal("2941.8"), 316, "https://images.pexels.com/photos/6167328/pexels-photo-6167328.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 996));
-            productRepository.save(new Product(categories.get("food").getId(), "认养一头牛 纯牛奶 250ml×24盒", "认养一头牛 纯牛奶 250ml×24盒", "Brand", new BigDecimal("2307"), 219, "https://images.pexels.com/photos/12420819/pexels-photo-12420819.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 701));
+            productRepository.save(new Product(categories.get("food").getId(), "认养一头牛 纯牛奶 250ml×24盒", "认养一头牛 纯牛奶 250ml×24盒", "Brand", new BigDecimal("2307"), 219, "https://images.pexels.com/photos/28985887/pexels-photo-28985887.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 701));
             productRepository.save(new Product(categories.get("food").getId(), "北海牧场 酸奶 200g×12杯", "北海牧场 酸奶 200g×12杯", "Brand", new BigDecimal("2474"), 235, "https://images.pexels.com/photos/4641957/pexels-photo-4641957.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 751));
             productRepository.save(new Product(categories.get("food").getId(), "桂格 即食燕麦片 1.5kg", "桂格 即食燕麦片 1.5kg", "Brand", new BigDecimal("961.5"), 246, "https://images.pexels.com/photos/30501878/pexels-photo-30501878.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 592));
             productRepository.save(new Product(categories.get("food").getId(), "汤臣倍健 蛋白粉 450g", "汤臣倍健 蛋白粉 450g", "Brand", new BigDecimal("392"), 94, "https://images.pexels.com/photos/5904234/pexels-photo-5904234.jpeg?w=400&h=300&fit=crop", ProductStatus.ON_SALE, 288));
@@ -299,6 +305,10 @@ public class DataInitializer implements CommandLineRunner {
         behaveCross(users.get("eve"), 20, phone, sport, rng);
         // frank: 电脑60%+家居40%（连接 bob ↔ carol）
         behaveCross(users.get("frank"), 20, comp, home, rng);
+        // grace: 食品85%+家居10%+美妆5%
+        behave(users.get("grace"), 20, food, home, beauty, rng);
+        // helen: 美妆85%+食品10%+运动5%
+        behave(users.get("helen"), 20, beauty, food, sport, rng);
     }
 
     private void behave(User user, int count, List<Product> main, List<Product> alt1,
@@ -458,7 +468,7 @@ public class DataInitializer implements CommandLineRunner {
         IMG.put("illy 深度烘焙咖啡粉 250g", "https://images.pexels.com/photos/27528587/pexels-photo-27528587.jpeg?w=400&h=300&fit=crop");
         IMG.put("瑞幸 冻干咖啡粉 12颗", "https://images.pexels.com/photos/5574070/pexels-photo-5574070.jpeg?w=400&h=300&fit=crop");
         IMG.put("永璞 闪萃咖啡液 14杯", "https://images.pexels.com/photos/19999076/pexels-photo-19999076.jpeg?w=400&h=300&fit=crop");
-        IMG.put("认养一头牛 纯牛奶 250ml×24盒", "https://images.pexels.com/photos/12420819/pexels-photo-12420819.jpeg?w=400&h=300&fit=crop");
+        IMG.put("认养一头牛 纯牛奶 250ml×24盒", "https://images.pexels.com/photos/28985887/pexels-photo-28985887.jpeg?w=400&h=300&fit=crop");
         IMG.put("安佳 全脂奶粉 1kg", "https://images.pexels.com/photos/37424061/pexels-photo-37424061.jpeg?w=400&h=300&fit=crop");
         IMG.put("北海牧场 酸奶 200g×12杯", "https://images.pexels.com/photos/4641957/pexels-photo-4641957.jpeg?w=400&h=300&fit=crop");
         IMG.put("桂格 即食燕麦片 1.5kg", "https://images.pexels.com/photos/30501878/pexels-photo-30501878.jpeg?w=400&h=300&fit=crop");

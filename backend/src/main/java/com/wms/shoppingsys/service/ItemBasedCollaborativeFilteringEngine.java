@@ -53,19 +53,41 @@ public class ItemBasedCollaborativeFilteringEngine implements RecommendationEngi
 
         Set<Long> seenProducts = targetScores.keySet();
 
-        return productVectors.keySet().stream()
-                .filter(productId -> !seenProducts.contains(productId))
-                .map(productId -> {
-                    double score = recommendationScore(productVectors, targetScores, productId);
-                    // 品类偏好加成
-                    Long catId = productRepository.findById(productId)
-                            .map(Product::getCategoryId).orElse(null);
-                    if (catId != null && favoriteCats.contains(catId)) {
-                        score *= 1.5;
-                    }
-                    return new ScoredProduct(productId, score);
-                })
-                .filter(scored -> scored.score() > 0)
+        // 执行 CF 评分
+        Map<Long, Double> scored = new HashMap<>();
+        for (Long productId : productVectors.keySet()) {
+            if (seenProducts.contains(productId)) continue;
+            double score = recommendationScore(productVectors, targetScores, productId);
+            Long catId = productRepository.findById(productId)
+                    .map(Product::getCategoryId).orElse(null);
+            if (catId != null && favoriteCats.contains(catId)) score *= 1.5;
+            if (score > 0) scored.put(productId, score);
+        }
+
+        // 找出相似用户，加入他们喜欢的产品
+        Map<Long, Map<Long, Double>> userVectors = userVectors(behaviors);
+        Map.Entry<Long, Double> bestSimilar = null;
+        for (Map.Entry<Long, Map<Long, Double>> entry : userVectors.entrySet()) {
+            if (entry.getKey().equals(userId)) continue;
+            double sim = cosine(userVectors.getOrDefault(userId, Map.of()), entry.getValue());
+            if (bestSimilar == null || sim > bestSimilar.getValue()) {
+                bestSimilar = Map.entry(entry.getKey(), sim);
+            }
+        }
+        if (bestSimilar != null && bestSimilar.getValue() > 0.05) {
+            Long otherUserId = bestSimilar.getKey();
+            double simWeight = bestSimilar.getValue() * 1.2; // 相似用户权重
+            for (Product p : productRepository.findAll()) {
+                if (seenProducts.contains(p.getId()) || scored.containsKey(p.getId())) continue;
+                if (behaviors.stream().anyMatch(b -> b.getUserId().equals(otherUserId) && b.getProductId().equals(p.getId()))) {
+                    scored.merge(p.getId(), simWeight, Double::sum);
+                }
+            }
+        }
+
+        return scored.entrySet().stream()
+                .map(e -> new ScoredProduct(e.getKey(), e.getValue()))
+                .filter(sc -> sc.score() > 0)
                 .sorted(Comparator.comparingDouble(ScoredProduct::score).reversed()
                         .thenComparing(ScoredProduct::productId))
                 .limit(limit)
@@ -145,6 +167,31 @@ public class ItemBasedCollaborativeFilteringEngine implements RecommendationEngi
                         Collectors.summingDouble(behavior ->
                                 behavior.getWeight().doubleValue() * timeDecay(behavior))
                 ));
+    }
+
+    // 构建用户向量：每个用户→{品类→权重}
+    private Map<Long, Map<Long, Double>> userVectors(List<UserBehavior> behaviors) {
+        Map<Long, Map<Long, Double>> vectors = new HashMap<>();
+        for (UserBehavior behavior : behaviors) {
+            productRepository.findById(behavior.getProductId()).ifPresent(p -> {
+                double weight = behavior.getWeight().doubleValue() * timeDecay(behavior);
+                vectors.computeIfAbsent(behavior.getUserId(), ignored -> new HashMap<>())
+                        .merge(p.getCategoryId(), weight, Double::sum);
+            });
+        }
+        return vectors;
+    }
+
+    // 两个权重向量的余弦相似度
+    private double cosine(Map<Long, Double> a, Map<Long, Double> b) {
+        Set<Long> keys = new HashSet<>(a.keySet()); keys.addAll(b.keySet());
+        double dot = 0, normA = 0, normB = 0;
+        for (Long k : keys) {
+            double va = a.getOrDefault(k, 0.0), vb = b.getOrDefault(k, 0.0);
+            dot += va * vb; normA += va * va; normB += vb * vb;
+        }
+        if (normA == 0 || normB == 0) return 0;
+        return dot / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
     private record ScoredProduct(Long productId, double score) {

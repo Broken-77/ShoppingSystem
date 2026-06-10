@@ -13,7 +13,7 @@
           <strong>{{ order.orderNo }}</strong>
           <p class="muted">创建 {{ formatTime(order.createdAt) }} <span v-if="order.paidAt"> 支付 {{ formatTime(order.paidAt) }}</span></p>
         </div>
-        <div class="actions">
+        <div class="actions" style="min-width:280px;display:flex;align-items:center;gap:8px;justify-content:flex-end">
           <strong class="price">¥{{ order.totalAmount }}</strong>
           <span class="status-pill" :class="statusClass(order.status)">{{ statusLabel(order.status) }}</span>
           <RouterLink class="secondary-button" :to="`/orders/${order.id}`">
@@ -24,18 +24,22 @@
             type="button"
             :disabled="cancelling === order.id"
             @click="cancel(order.id)"
-          >
+
+>
             {{ cancelling === order.id ? '取消中' : '取消订单' }}
           </button>
         </div>
       </div>
       <div class="table-wrap">
         <table class="list-table">
+          <thead>
+            <tr><th>商品</th><th style="text-align:right">数量</th><th style="text-align:right">小计</th></tr>
+          </thead>
           <tbody>
             <tr v-for="item in order.items" :key="item.id">
               <td>{{ item.productName }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>¥{{ item.subtotal }}</td>
+              <td style="text-align:right">{{ item.quantity }}</td>
+              <td style="text-align:right">¥{{ item.subtotal }}</td>
             </tr>
           </tbody>
         </table>

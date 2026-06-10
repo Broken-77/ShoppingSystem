@@ -39,3 +39,4 @@ backend/src/main/resources/application-mysql.properties
 .idea/workspace.xml
 crawler/
 *.ipynb_checkpoints
+static/
