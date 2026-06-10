@@ -17,7 +17,7 @@
             <span v-if="order.paidAt"> 支付 {{ formatTime(order.paidAt) }}</span>
           </p>
         </div>
-        <div class="actions">
+        <div class="actions" style="min-width:220px;display:flex;align-items:center;gap:8px;justify-content:flex-end">
           <strong class="price">¥{{ order.totalAmount }}</strong>
           <span class="status-pill" :class="statusClass(order.status)">{{ statusLabel(order.status) }}</span>
         </div>
@@ -28,16 +28,16 @@
           <thead>
             <tr>
               <th>商品</th>
-              <th>数量</th>
-              <th>小计</th>
+              <th style="text-align:right">数量</th>
+              <th style="text-align:right">小计</th>
               <th>评价</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in order.items" :key="item.id">
               <td>{{ item.productName }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>¥{{ item.subtotal }}</td>
+              <td style="text-align:right">{{ item.quantity }}</td>
+              <td style="text-align:right">¥{{ item.subtotal }}</td>
               <td>
                 <RouterLink class="secondary-button" :to="`/products/${item.productId}`">评价</RouterLink>
               </td>
