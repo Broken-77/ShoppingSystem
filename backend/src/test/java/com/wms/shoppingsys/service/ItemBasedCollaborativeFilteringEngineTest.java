@@ -177,6 +177,19 @@ class ItemBasedCollaborativeFilteringEngineTest {
                 .doesNotContain(purchased.getId(), crossCategory.getId());
     }
 
+    @Test
+    void recommendsProductsFromTheMostSimilarUser() {
+        Product targetHistory = saveProduct(1L, "target-history", 10);
+        Product similarUserHistory = saveProduct(1L, "similar-user-history", 10);
+
+        userBehaviorRepository.save(new UserBehavior(99L, targetHistory.getId(), BehaviorType.VIEW, 1));
+        userBehaviorRepository.save(new UserBehavior(2L, similarUserHistory.getId(), BehaviorType.CART, 4));
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations).contains(similarUserHistory.getId());
+    }
+
     private Product saveProduct(Long categoryId, String name, int salesCount) {
         return productRepository.save(new Product(
                 categoryId, name, name, "brand", BigDecimal.TEN, 10,
