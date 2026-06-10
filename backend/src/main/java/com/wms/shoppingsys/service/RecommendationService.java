@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -52,12 +51,11 @@ public class RecommendationService {
         List<Product> sameCategory = productRepository.findByStatusAndCategoryId(ProductStatus.ON_SALE, product.getCategoryId())
                 .stream()
                 .filter(candidate -> !candidate.getId().equals(productId))
+                .filter(this::available)
+                .sorted(Comparator.comparing(Product::getSalesCount).reversed()
+                        .thenComparing(Product::getId))
                 .toList();
-        List<Product> sameBrand = productRepository.findByStatus(ProductStatus.ON_SALE).stream()
-                .filter(candidate -> !candidate.getId().equals(productId))
-                .filter(candidate -> product.getBrand() != null && product.getBrand().equals(candidate.getBrand()))
-                .toList();
-        return mergeProducts(recommended, sameCategory, sameBrand, hotProducts(), newProducts());
+        return mergeProducts(recommended, sameCategory);
     }
 
     // ── 根据用户行为数据，返回用户最感兴趣品类的热门商品 ────────────
@@ -114,10 +112,6 @@ public class RecommendationService {
             }
         }
         return new ArrayList<>(merged.values());
-    }
-
-    private List<Product> hotProducts() {
-        return productRepository.findTop12ByStatusOrderBySalesCountDesc(ProductStatus.ON_SALE);
     }
 
     private List<Product> newProducts() {

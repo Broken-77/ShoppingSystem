@@ -2,6 +2,7 @@ package com.wms.shoppingsys.service;
 
 import com.wms.shoppingsys.entity.Product;
 import com.wms.shoppingsys.entity.UserBehavior;
+import com.wms.shoppingsys.enums.ProductStatus;
 import com.wms.shoppingsys.repository.ProductRepository;
 import com.wms.shoppingsys.repository.UserBehaviorRepository;
 
@@ -14,6 +15,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ItemBasedCollaborativeFilteringEngine implements RecommendationEngine {
+    private static final double FULL_CONFIDENCE_COMMON_USERS = 3.0;
+
     private final UserBehaviorRepository userBehaviorRepository;
     private final ProductRepository productRepository;
 
@@ -73,16 +76,32 @@ public class ItemBasedCollaborativeFilteringEngine implements RecommendationEngi
     @Override
     @Transactional(readOnly = true)
     public List<Long> similarProductIds(Long productId, int limit) {
+        Product source = productRepository.findById(productId).orElse(null);
+        if (source == null) return List.of();
+
         Map<Long, Map<Long, Double>> productVectors = productVectors(userBehaviorRepository.findAll());
-        return productVectors.keySet().stream()
-                .filter(candidateId -> !candidateId.equals(productId))
-                .map(candidateId -> new ScoredProduct(candidateId, similarity(productVectors, productId, candidateId)))
+        return productRepository.findByStatusAndCategoryId(ProductStatus.ON_SALE, source.getCategoryId()).stream()
+                .filter(candidate -> !candidate.getId().equals(productId))
+                .filter(candidate -> candidate.getStock() > 0)
+                .map(candidate -> new ScoredProduct(
+                        candidate.getId(), adjustedSimilarity(productVectors, productId, candidate.getId())
+                ))
                 .filter(scored -> scored.score() > 0)
                 .sorted(Comparator.comparingDouble(ScoredProduct::score).reversed()
                         .thenComparing(ScoredProduct::productId))
                 .limit(limit)
                 .map(ScoredProduct::productId)
                 .toList();
+    }
+
+    private double adjustedSimilarity(Map<Long, Map<Long, Double>> productVectors,
+                                      Long leftProductId,
+                                      Long rightProductId) {
+        Map<Long, Double> left = productVectors.getOrDefault(leftProductId, Map.of());
+        Map<Long, Double> right = productVectors.getOrDefault(rightProductId, Map.of());
+        long commonUserCount = left.keySet().stream().filter(right::containsKey).count();
+        double confidence = Math.min(commonUserCount / FULL_CONFIDENCE_COMMON_USERS, 1.0);
+        return similarity(productVectors, leftProductId, rightProductId) * confidence;
     }
 
     private double recommendationScore(Map<Long, Map<Long, Double>> productVectors,
