@@ -1,6 +1,8 @@
 package com.wms.shoppingsys.service;
 
 import com.wms.shoppingsys.entity.Product;
+import com.wms.shoppingsys.entity.UserBehavior;
+import com.wms.shoppingsys.enums.BehaviorType;
 import com.wms.shoppingsys.enums.ProductStatus;
 import com.wms.shoppingsys.repository.ProductRepository;
 import com.wms.shoppingsys.repository.UserBehaviorRepository;
@@ -39,6 +41,20 @@ class RecommendationServiceTest {
                 .extracting(Product::getId)
                 .containsExactly(higherSales.getId(), lowerSales.getId())
                 .doesNotContain(crossCategory.getId());
+    }
+
+    @Test
+    void homeRecommendationsNeverReintroducePurchasedProductsFromFallback() {
+        Product purchased = saveProduct(1L, "purchased", 1000);
+        Product fallback = saveProduct(1L, "fallback", 100);
+        userBehaviorRepository.save(new UserBehavior(77L, purchased.getId(), BehaviorType.ORDER, 8));
+
+        List<Product> recommendations = recommendationService.homeRecommendations(77L);
+
+        assertThat(recommendations)
+                .extracting(Product::getId)
+                .contains(fallback.getId())
+                .doesNotContain(purchased.getId());
     }
 
     private Product saveProduct(Long categoryId, String name, int salesCount) {

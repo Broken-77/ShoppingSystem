@@ -2,6 +2,7 @@ package com.wms.shoppingsys.service;
 
 import com.wms.shoppingsys.entity.Product;
 import com.wms.shoppingsys.entity.UserBehavior;
+import com.wms.shoppingsys.enums.BehaviorType;
 import com.wms.shoppingsys.repository.ProductRepository;
 import com.wms.shoppingsys.repository.UserBehaviorRepository;
 import com.wms.shoppingsys.enums.ProductStatus;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -29,9 +31,14 @@ public class RecommendationService {
 
     @Transactional(readOnly = true)
     public List<Product> homeRecommendations(Long userId) {
+        List<UserBehavior> behaviors = behaviorRepository.findByUserId(userId);
+        Set<Long> purchasedProductIds = behaviors.stream()
+                .filter(behavior -> behavior.getBehaviorType() == BehaviorType.ORDER)
+                .map(UserBehavior::getProductId)
+                .collect(Collectors.toSet());
         List<Product> cfResults = toProducts(recommendationEngine.recommendProductIds(userId, DEFAULT_LIMIT));
-        List<Product> categoryHot = categoryHotProducts(userId);
-        return mergeProducts(cfResults, categoryHot, newProducts());
+        List<Product> categoryHot = categoryHotProducts(behaviors, purchasedProductIds);
+        return mergeProductsExcluding(purchasedProductIds, cfResults, categoryHot, newProducts());
     }
 
     @Transactional(readOnly = true)
@@ -59,9 +66,7 @@ public class RecommendationService {
     }
 
     // ── 根据用户行为数据，返回用户最感兴趣品类的热门商品 ────────────
-    private List<Product> categoryHotProducts(Long userId) {
-        // 找到用户互动最多的品类
-        List<UserBehavior> behaviors = behaviorRepository.findByUserId(userId);
+    private List<Product> categoryHotProducts(List<UserBehavior> behaviors, Set<Long> excludedProductIds) {
         if (behaviors.isEmpty()) return List.of();
 
         Map<Long, Long> catActivity = new HashMap<>();
@@ -85,6 +90,7 @@ public class RecommendationService {
             productRepository.findTop12ByStatusAndCategoryIdOrderBySalesCountDesc(ProductStatus.ON_SALE, catId)
                     .stream()
                     .filter(this::available)
+                    .filter(product -> !excludedProductIds.contains(product.getId()))
                     .forEach(results::add);
         }
         return results;
@@ -100,10 +106,16 @@ public class RecommendationService {
 
     @SafeVarargs
     private final List<Product> mergeProducts(List<Product>... productLists) {
+        return mergeProductsExcluding(Set.of(), productLists);
+    }
+
+    @SafeVarargs
+    private final List<Product> mergeProductsExcluding(Set<Long> excludedProductIds,
+                                                       List<Product>... productLists) {
         Map<Long, Product> merged = new LinkedHashMap<>();
         for (List<Product> productList : productLists) {
             for (Product product : productList) {
-                if (available(product)) {
+                if (available(product) && !excludedProductIds.contains(product.getId())) {
                     merged.putIfAbsent(product.getId(), product);
                 }
                 if (merged.size() >= DEFAULT_LIMIT) {

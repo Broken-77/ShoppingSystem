@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 @SpringBootTest
 class ItemBasedCollaborativeFilteringEngineTest {
@@ -88,6 +89,92 @@ class ItemBasedCollaborativeFilteringEngineTest {
 
         assertThat(similarProducts.indexOf(supportedMatch.getId()))
                 .isLessThan(similarProducts.indexOf(sparseMatch.getId()));
+    }
+
+    @Test
+    void viewedButUnpurchasedProductRemainsEligible() {
+        Product viewed = saveProduct(1L, "viewed", 10);
+        userBehaviorRepository.save(new UserBehavior(99L, viewed.getId(), BehaviorType.VIEW, 1));
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations).contains(viewed.getId());
+    }
+
+    @Test
+    void repeatedViewsIncreaseDirectInterest() {
+        Product viewedOnce = saveProduct(1L, "viewed-once", 10);
+        Product repeatedlyViewed = saveProduct(1L, "repeatedly-viewed", 10);
+        userBehaviorRepository.save(new UserBehavior(99L, viewedOnce.getId(), BehaviorType.VIEW, 1));
+        for (int i = 0; i < 4; i++) {
+            userBehaviorRepository.save(new UserBehavior(99L, repeatedlyViewed.getId(), BehaviorType.VIEW, 1));
+        }
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations.indexOf(repeatedlyViewed.getId()))
+                .isLessThan(recommendations.indexOf(viewedOnce.getId()));
+    }
+
+    @Test
+    void directlyViewedProductRanksBeforeStrongerRelatedOnlyCandidate() {
+        Product viewed = saveProduct(1L, "recently-viewed", 10);
+        Product source = saveProduct(1L, "strong-source", 10);
+        Product relatedOnly = saveProduct(1L, "strong-related-only", 10);
+
+        userBehaviorRepository.save(new UserBehavior(99L, viewed.getId(), BehaviorType.VIEW, 1));
+        userBehaviorRepository.save(new UserBehavior(99L, source.getId(), BehaviorType.ORDER, 8));
+        for (long userId = 1; userId <= 3; userId++) {
+            userBehaviorRepository.save(new UserBehavior(userId, source.getId(), BehaviorType.ORDER, 8));
+            userBehaviorRepository.save(new UserBehavior(userId, relatedOnly.getId(), BehaviorType.ORDER, 8));
+        }
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations.indexOf(viewed.getId()))
+                .isLessThan(recommendations.indexOf(relatedOnly.getId()));
+    }
+
+    @Test
+    void moreRecentlyViewedProductRanksBeforeOlderFrequentlyViewedProduct() throws InterruptedException {
+        Product olderFrequentlyViewed = saveProduct(1L, "older-frequent", 10);
+        Product recentlyViewed = saveProduct(1L, "recent", 10);
+        for (int i = 0; i < 4; i++) {
+            userBehaviorRepository.save(new UserBehavior(99L, olderFrequentlyViewed.getId(), BehaviorType.VIEW, 1));
+        }
+        Thread.sleep(10);
+        userBehaviorRepository.save(new UserBehavior(99L, recentlyViewed.getId(), BehaviorType.VIEW, 1));
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations.indexOf(recentlyViewed.getId()))
+                .isLessThan(recommendations.indexOf(olderFrequentlyViewed.getId()));
+    }
+
+    @Test
+    void repeatedBehaviorUsesLogarithmicDamping() {
+        assertThat(ItemBasedCollaborativeFilteringEngine.dampedBehaviorScore(1, 4, 1.0))
+                .isCloseTo(1 + Math.log(4), within(0.000001));
+    }
+
+    @Test
+    void purchasedProductRecommendsOnlyRelatedProductsInSameCategory() {
+        Product purchased = saveProduct(1L, "purchased", 10);
+        Product sameCategory = saveProduct(1L, "same-category-related", 10);
+        Product crossCategory = saveProduct(2L, "cross-category-related", 10);
+
+        userBehaviorRepository.save(new UserBehavior(99L, purchased.getId(), BehaviorType.ORDER, 8));
+        for (long userId = 1; userId <= 3; userId++) {
+            userBehaviorRepository.save(new UserBehavior(userId, purchased.getId(), BehaviorType.ORDER, 8));
+            userBehaviorRepository.save(new UserBehavior(userId, sameCategory.getId(), BehaviorType.VIEW, 1));
+            userBehaviorRepository.save(new UserBehavior(userId, crossCategory.getId(), BehaviorType.VIEW, 1));
+        }
+
+        List<Long> recommendations = recommendationEngine.recommendProductIds(99L, 10);
+
+        assertThat(recommendations)
+                .contains(sameCategory.getId())
+                .doesNotContain(purchased.getId(), crossCategory.getId());
     }
 
     private Product saveProduct(Long categoryId, String name, int salesCount) {
