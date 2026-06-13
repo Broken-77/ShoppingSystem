@@ -19,12 +19,13 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.HexFormat;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Objects;
+import java.util.Set;
 
 @Component
 @ConditionalOnProperty(prefix = "shopping.seed", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -198,7 +199,7 @@ public class DataInitializer implements CommandLineRunner {
         Map<String, User> users = seedUsers();
         Map<String, Category> categories = seedCategories();
         Map<String, Product> products = seedProducts(categories);
-        seedBehaviors(users, products);
+        seedBehaviors(users, products, categories);
     }
 
     private Map<String, User> seedUsers() {
@@ -228,210 +229,209 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Map<String, Category> seedCategories() {
-        if (categoryRepository.count() == 0) {
-            categoryRepository.saveAll(List.of(
-                    new Category("手机数码", null, true, 1),
-                    new Category("电脑办公", null, true, 2),
-                    new Category("家居生活", null, true, 3),
-                    new Category("运动户外", null, true, 4),
-                    new Category("美妆个护", null, true, 5),
-                    new Category("食品饮料", null, true, 6)
-            ));
-        } else if (categoryRepository.count() < 6) {
-            // 兼容旧数据库：补全缺少的分类
-            List<Category> existing = categoryRepository.findAll();
-            if (findCategoryOpt(existing, "美妆个护") == null) {
-                categoryRepository.save(new Category("美妆个护", null, true, 5));
-            }
-            if (findCategoryOpt(existing, "食品饮料") == null) {
-                categoryRepository.save(new Category("食品饮料", null, true, 6));
-            }
+        Map<String, Category> categoriesByName = new LinkedHashMap<>();
+        for (Category category : categoryRepository.findAll()) {
+            categoriesByName.putIfAbsent(category.getName(), category);
         }
-        List<Category> categories = categoryRepository.findAll();
         return Map.of(
-                "phone", findCategory(categories, "手机数码"),
-                "computer", findCategory(categories, "电脑办公"),
-                "home", findCategory(categories, "家居生活"),
-                "sport", findCategory(categories, "运动户外"),
-                "beauty", findCategory(categories, "美妆个护"),
-                "food", findCategory(categories, "食品饮料")
+                "phone", ensureCategory(categoriesByName, "手机数码", 1),
+                "computer", ensureCategory(categoriesByName, "电脑办公", 2),
+                "home", ensureCategory(categoriesByName, "家居生活", 3),
+                "sport", ensureCategory(categoriesByName, "运动户外", 4),
+                "beauty", ensureCategory(categoriesByName, "美妆个护", 5),
+                "food", ensureCategory(categoriesByName, "食品饮料", 6)
         );
     }
 
-    private Category findCategoryOpt(List<Category> categories, String name) {
-        return categories.stream()
-                .filter(c -> name.equals(c.getName()))
-                .findFirst()
-                .orElse(null);
+    private Category ensureCategory(Map<String, Category> categoriesByName, String name, int sortOrder) {
+        return categoriesByName.computeIfAbsent(name,
+                ignored -> categoryRepository.save(new Category(name, null, true, sortOrder)));
     }
 
     private Map<String, Product> seedProducts(Map<String, Category> categories) {
-        if (productRepository.count() == 0) {
-            // 手机数码 (38件)
-            productRepository.save(product(categories.get("phone"), "iphone-15-pro-max", "iPhone 15 Pro Max", "iPhone 15 Pro Max", "Brand", "7666", 39, 79));
-            productRepository.save(product(categories.get("phone"), "华为-mate-60-pro", "华为 Mate 60 Pro", "华为 Mate 60 Pro", "Brand", "3923.9", 21, 82));
-            productRepository.save(product(categories.get("phone"), "小米-14-ultra", "小米 14 Ultra", "小米 14 Ultra", "Brand", "7935", 26, 68));
-            productRepository.save(product(categories.get("phone"), "oppo-find-x7-ultra", "OPPO Find X7 Ultra", "OPPO Find X7 Ultra", "Brand", "8337.8", 50, 79));
-            productRepository.save(product(categories.get("phone"), "vivo-x100-pro", "vivo X100 Pro", "vivo X100 Pro", "Brand", "8961.9", 24, 44));
-            productRepository.save(product(categories.get("phone"), "三星-galaxy-s24-ultra", "三星 Galaxy S24 Ultra", "三星 Galaxy S24 Ultra", "Brand", "8207", 27, 41));
-            productRepository.save(product(categories.get("phone"), "一加-12", "一加 12", "一加 12", "Brand", "8002", 15, 210));
-            productRepository.save(product(categories.get("phone"), "荣耀-magic6-pro", "荣耀 Magic6 Pro", "荣耀 Magic6 Pro", "Brand", "4611.8", 36, 92));
-            productRepository.save(product(categories.get("phone"), "nova-12-ultra", "Nova 12 Ultra", "Nova 12 Ultra", "Brand", "8104", 38, 112));
-            productRepository.save(product(categories.get("phone"), "airpods-pro-2", "AirPods Pro 2", "AirPods Pro 2", "Brand", "5462", 19, 265));
-            productRepository.save(product(categories.get("phone"), "华为-freebuds-pro-3", "华为 FreeBuds Pro 3", "华为 FreeBuds Pro 3", "Brand", "563.9", 46, 258));
-            productRepository.save(product(categories.get("phone"), "小米-buds-4-pro", "小米 Buds 4 Pro", "小米 Buds 4 Pro", "Brand", "1924", 57, 339));
-            productRepository.save(product(categories.get("phone"), "apple-watch-ultra-2", "Apple Watch Ultra 2", "Apple Watch Ultra 2", "Brand", "8583", 14, 33));
-            productRepository.save(product(categories.get("phone"), "华为-watch-gt-4", "华为 Watch GT 4", "华为 Watch GT 4", "Brand", "630.9", 31, 314));
-            productRepository.save(product(categories.get("phone"), "小米手环-8-pro", "小米手环 8 Pro", "小米手环 8 Pro", "Brand", "1853", 88, 241));
-            productRepository.save(product(categories.get("phone"), "ipad-air-m2", "iPad Air M2", "iPad Air M2", "Brand", "3819.8", 23, 211));
-            productRepository.save(product(categories.get("phone"), "华为-matepad-pro-132", "华为 MatePad Pro 13.2", "华为 MatePad Pro 13.2", "Brand", "2818", 30, 107));
-            productRepository.save(product(categories.get("phone"), "小米平板-6s-pro", "小米平板 6S Pro", "小米平板 6S Pro", "Brand", "1889", 31, 92));
-            productRepository.save(product(categories.get("phone"), "anker-65w-氮化镓充电器", "ANKER 65W 氮化镓充电器", "ANKER 65W 氮化镓充电器", "Brand", "2031", 51, 173));
-            productRepository.save(product(categories.get("phone"), "闪迪-256gb-tf-存储卡", "闪迪 256GB TF 存储卡", "闪迪 256GB TF 存储卡", "Brand", "8528.5", 125, 758));
-            productRepository.save(product(categories.get("phone"), "sony-wh-1000xm5", "Sony WH-1000XM5", "Sony WH-1000XM5", "Brand", "3108.5", 17, 198));
-            productRepository.save(product(categories.get("phone"), "bose-qc-ultra", "Bose QC Ultra", "Bose QC Ultra", "Brand", "7275.5", 30, 188));
-            productRepository.save(product(categories.get("phone"), "jbl-flip-6", "JBL Flip 6", "JBL Flip 6", "Brand", "3344.9", 22, 267));
-            productRepository.save(product(categories.get("phone"), "kindle-paperwhite-5", "Kindle Paperwhite 5", "Kindle Paperwhite 5", "Brand", "8884.9", 116, 200));
-            productRepository.save(product(categories.get("phone"), "gopro-hero-12-black", "GoPro Hero 12 Black", "GoPro Hero 12 Black", "Brand", "6981", 38, 384));
-            productRepository.save(product(categories.get("phone"), "insta360-x4", "Insta360 X4", "Insta360 X4", "Brand", "8694.9", 20, 257));
-            productRepository.save(product(categories.get("phone"), "macbook-pro-14-m3", "MacBook Pro 14 M3", "MacBook Pro 14 M3", "Brand", "6675", 18, 29));
-            productRepository.save(product(categories.get("phone"), "华为-matebook-x-pro-2024", "华为 MateBook X Pro 2024", "华为 MateBook X Pro 2024", "Brand", "3942.5", 11, 137));
-            productRepository.save(product(categories.get("phone"), "小米-book-pro-16", "小米 Book Pro 16", "小米 Book Pro 16", "Brand", "1079", 11, 95));
-            productRepository.save(product(categories.get("phone"), "samsung-viewfinity-s9", "Samsung ViewFinity S9", "Samsung ViewFinity S9", "Brand", "8180.9", 28, 54));
-            productRepository.save(product(categories.get("phone"), "罗技-g-pro-x-耳机", "罗技 G Pro X 耳机", "罗技 G Pro X 耳机", "Brand", "1182.9", 49, 177));
-            productRepository.save(product(categories.get("phone"), "samsung-t7-shield-2tb", "Samsung T7 Shield 2TB", "Samsung T7 Shield 2TB", "Brand", "4030.9", 114, 447));
-            productRepository.save(product(categories.get("phone"), "华为-ax6", "华为 AX6", "华为 AX6", "Brand", "1452.9", 119, 454));
-            productRepository.save(product(categories.get("phone"), "小米-扫拖机器人-x20", "小米 扫拖机器人 X20+", "小米 扫拖机器人 X20+", "Brand", "4696", 37, 88));
-            productRepository.save(product(categories.get("phone"), "bose-soundlink-max", "Bose SoundLink Max", "Bose SoundLink Max", "Brand", "523", 148, 481));
-            productRepository.save(product(categories.get("phone"), "小米-空气净化器-4-pro", "小米 空气净化器 4 Pro", "小米 空气净化器 4 Pro", "Brand", "2568", 15, 139));
-            productRepository.save(product(categories.get("phone"), "小米-电热水壶-2", "小米 电热水壶 2", "小米 电热水壶 2", "Brand", "3022.9", 74, 416));
-            productRepository.save(product(categories.get("phone"), "小米-走步机-c2", "小米 走步机 C2", "小米 走步机 C2", "Brand", "208", 81, 182));
-            // 电脑办公 (19件)
-            productRepository.save(product(categories.get("computer"), "绿联-手机支架-桌面", "绿联 手机支架 桌面", "绿联 手机支架 桌面", "Brand", "5349.5", 72, 149));
-            productRepository.save(product(categories.get("computer"), "thinkpad-x1-carbon-gen-12", "ThinkPad X1 Carbon Gen 12", "ThinkPad X1 Carbon Gen 12", "Brand", "12001.8", 8, 38));
-            productRepository.save(product(categories.get("computer"), "华硕-rog-枪神8", "华硕 ROG 枪神8", "华硕 ROG 枪神8", "Brand", "14171.9", 36, 40));
-            productRepository.save(product(categories.get("computer"), "dell-u2724d", "Dell U2724D", "Dell U2724D", "Brand", "2685.5", 30, 263));
-            productRepository.save(product(categories.get("computer"), "lg-27gr95um", "LG 27GR95UM", "LG 27GR95UM", "Brand", "2543", 26, 111));
-            productRepository.save(product(categories.get("computer"), "logitech-mx-master-3s", "Logitech MX Master 3S", "Logitech MX Master 3S", "Brand", "10016", 87, 151));
-            productRepository.save(product(categories.get("computer"), "keychron-q1-pro", "Keychron Q1 Pro", "Keychron Q1 Pro", "Brand", "10507.5", 54, 177));
-            productRepository.save(product(categories.get("computer"), "cherry-mx-board-30s", "Cherry MX Board 3.0S", "Cherry MX Board 3.0S", "Brand", "4928.9", 132, 135));
-            productRepository.save(product(categories.get("computer"), "blue-yeti-x-usb-麦克风", "Blue Yeti X USB 麦克风", "Blue Yeti X USB 麦克风", "Brand", "14301.8", 37, 286));
-            productRepository.save(product(categories.get("computer"), "wd-my-book-12tb", "WD My Book 12TB", "WD My Book 12TB", "Brand", "14991", 116, 414));
-            productRepository.save(product(categories.get("computer"), "tp-link-axe5400", "TP-Link AXE5400", "TP-Link AXE5400", "Brand", "2966.5", 140, 453));
-            productRepository.save(product(categories.get("computer"), "明基-screenbar-halo", "明基 ScreenBar Halo", "明基 ScreenBar Halo", "Brand", "8240.9", 139, 205));
-            productRepository.save(product(categories.get("computer"), "爱格升-lx-显示器支架", "爱格升 LX 显示器支架", "爱格升 LX 显示器支架", "Brand", "11830", 168, 288));
-            productRepository.save(product(categories.get("computer"), "herman-miller-aeron", "Herman Miller Aeron", "Herman Miller Aeron", "Brand", "14956.9", 20, 39));
-            productRepository.save(product(categories.get("computer"), "网易严选-人体工学椅", "网易严选 人体工学椅", "网易严选 人体工学椅", "Brand", "7472", 23, 136));
-            productRepository.save(product(categories.get("computer"), "wacom-intuos-pro-m", "Wacom Intuos Pro M", "Wacom Intuos Pro M", "Brand", "7162", 51, 187));
-            productRepository.save(product(categories.get("computer"), "apc-back-ups-650", "APC Back-UPS 650", "APC Back-UPS 650", "Brand", "1866", 181, 629));
-            productRepository.save(product(categories.get("computer"), "绿联-雷电4-扩展坞", "绿联 雷电4 扩展坞", "绿联 雷电4 扩展坞", "Brand", "10540", 88, 223));
-            productRepository.save(product(categories.get("computer"), "微软-surface-pro-10", "微软 Surface Pro 10", "微软 Surface Pro 10", "Brand", "4410.9", 12, 146));
-            // 家居生活 (33件)
-            productRepository.save(product(categories.get("home"), "大疆-osmo-mobile-6", "大疆 Osmo Mobile 6", "大疆 Osmo Mobile 6", "Brand", "4457.9", 38, 96));
-            productRepository.save(product(categories.get("home"), "雷蛇-deathadder-v3-pro", "雷蛇 DeathAdder V3 Pro", "雷蛇 DeathAdder V3 Pro", "Brand", "997.8", 110, 110));
-            productRepository.save(product(categories.get("home"), "群晖-ds224", "群晖 DS224+", "群晖 DS224+", "Brand", "153.8", 15, 58));
-            productRepository.save(product(categories.get("home"), "罗技-streamcam", "罗技 StreamCam", "罗技 StreamCam", "Brand", "2118.5", 114, 170));
-            productRepository.save(product(categories.get("home"), "戴森-v15-detect", "戴森 V15 Detect", "戴森 V15 Detect", "Brand", "3893.5", 16, 190));
-            productRepository.save(product(categories.get("home"), "戴森-airwrap-hs05", "戴森 Airwrap HS05", "戴森 Airwrap HS05", "Brand", "3185.8", 29, 56));
-            productRepository.save(product(categories.get("home"), "飞利浦-空气炸锅-hd9651", "飞利浦 空气炸锅 HD9651", "飞利浦 空气炸锅 HD9651", "Brand", "579.5", 87, 141));
-            productRepository.save(product(categories.get("home"), "德龙-ecam23460-全自动咖啡机", "德龙 ECAM23.460 全自动咖啡机", "德龙 ECAM23.460 全自动咖啡机", "Brand", "3517.8", 43, 270));
-            productRepository.save(product(categories.get("home"), "松下-sr-hbc184-电饭煲", "松下 SR-HBC184 电饭煲", "松下 SR-HBC184 电饭煲", "Brand", "1369.9", 34, 142));
-            productRepository.save(product(categories.get("home"), "九阳-dj13b-d08ec-豆浆机", "九阳 DJ13B-D08EC 豆浆机", "九阳 DJ13B-D08EC 豆浆机", "Brand", "957", 59, 91));
-            productRepository.save(product(categories.get("home"), "戴森-pure-cool-空气净化风扇", "戴森 Pure Cool 空气净化风扇", "戴森 Pure Cool 空气净化风扇", "Brand", "444.9", 28, 277));
-            productRepository.save(product(categories.get("home"), "aqara-智能窗帘电机-c3", "Aqara 智能窗帘电机 C3", "Aqara 智能窗帘电机 C3", "Brand", "4101", 97, 390));
-            productRepository.save(product(categories.get("home"), "yeelight-智能吸顶灯-pro", "Yeelight 智能吸顶灯 Pro", "Yeelight 智能吸顶灯 Pro", "Brand", "1192.5", 50, 82));
-            productRepository.save(product(categories.get("home"), "德业-dyd-t22a3-除湿机", "德业 DYD-T22A3 除湿机", "德业 DYD-T22A3 除湿机", "Brand", "3024", 114, 323));
-            productRepository.save(product(categories.get("home"), "muji-超声波香薰机", "MUJI 超声波香薰机", "MUJI 超声波香薰机", "Brand", "4839.5", 173, 381));
-            productRepository.save(product(categories.get("home"), "象印-sm-sg48-保温杯", "象印 SM-SG48 保温杯", "象印 SM-SG48 保温杯", "Brand", "4847.5", 19, 234));
-            productRepository.save(product(categories.get("home"), "水星家纺-95鹅绒被", "水星家纺 95鹅绒被", "水星家纺 95鹅绒被", "Brand", "2211.9", 81, 647));
-            productRepository.save(product(categories.get("home"), "天堂-晴雨伞-三折", "天堂 晴雨伞 三折", "天堂 晴雨伞 三折", "Brand", "4657.5", 93, 421));
-            productRepository.save(product(categories.get("home"), "3m-净水器-sdw8000", "3M 净水器 SDW8000", "3M 净水器 SDW8000", "Brand", "2079.9", 89, 106));
-            productRepository.save(product(categories.get("home"), "bruno-多功能料理锅", "Bruno 多功能料理锅", "Bruno 多功能料理锅", "Brand", "2228", 88, 521));
-            productRepository.save(product(categories.get("home"), "美的-m1-l213c-微波炉", "美的 M1-L213C 微波炉", "美的 M1-L213C 微波炉", "Brand", "3817", 35, 165));
-            productRepository.save(product(categories.get("home"), "安踏-c37-50-休闲鞋", "安踏 C37 5.0 休闲鞋", "安踏 C37 5.0 休闲鞋", "Brand", "4148.5", 147, 80));
-            productRepository.save(product(categories.get("home"), "stanley-户外保温箱-15l", "Stanley 户外保温箱 15L", "Stanley 户外保温箱 15L", "Brand", "2636", 99, 478));
-            productRepository.save(product(categories.get("home"), "佳明-forerunner-265", "佳明 Forerunner 265", "佳明 Forerunner 265", "Brand", "2382.9", 77, 470));
-            productRepository.save(product(categories.get("home"), "崔克-domane-al-4", "崔克 Domane AL 4", "崔克 Domane AL 4", "Brand", "1787.9", 40, 65));
-            productRepository.save(product(categories.get("home"), "charlotte-tilbury-枕边话", "Charlotte Tilbury 枕边话", "Charlotte Tilbury 枕边话", "Brand", "2252", 220, 455));
-            productRepository.save(product(categories.get("home"), "潘海利根-兽首狐狸-75ml", "潘海利根 兽首狐狸 75ml", "潘海利根 兽首狐狸 75ml", "Brand", "2643.5", 52, 339));
-            productRepository.save(product(categories.get("home"), "marvis-牙膏套装-7支", "Marvis 牙膏套装 7支", "Marvis 牙膏套装 7支", "Brand", "321.9", 192, 402));
-            productRepository.save(product(categories.get("home"), "illy-深度烘焙咖啡粉-250g", "illy 深度烘焙咖啡粉 250g", "illy 深度烘焙咖啡粉 250g", "Brand", "517", 176, 153));
-            productRepository.save(product(categories.get("home"), "瑞幸-冻干咖啡粉-12颗", "瑞幸 冻干咖啡粉 12颗", "瑞幸 冻干咖啡粉 12颗", "Brand", "2715.9", 250, 1190));
-            productRepository.save(product(categories.get("home"), "永璞-闪萃咖啡液-14杯", "永璞 闪萃咖啡液 14杯", "永璞 闪萃咖啡液 14杯", "Brand", "4621", 224, 498));
-            productRepository.save(product(categories.get("home"), "安佳-全脂奶粉-1kg", "安佳 全脂奶粉 1kg", "安佳 全脂奶粉 1kg", "Brand", "2270.9", 196, 282));
-            productRepository.save(product(categories.get("home"), "奔富-bin-389-干红-750ml", "奔富 Bin 389 干红 750ml", "奔富 Bin 389 干红 750ml", "Brand", "3845.5", 22, 214));
-            // 运动户外 (21件)
-            productRepository.save(product(categories.get("sport"), "nike-air-zoom-pegasus-40", "Nike Air Zoom Pegasus 40", "Nike Air Zoom Pegasus 40", "Brand", "2054", 100, 85));
-            productRepository.save(product(categories.get("sport"), "adidas-ultraboost-light", "Adidas Ultraboost Light", "Adidas Ultraboost Light", "Brand", "6186.9", 89, 350));
-            productRepository.save(product(categories.get("sport"), "李宁-超轻21-跑鞋", "李宁 超轻21 跑鞋", "李宁 超轻21 跑鞋", "Brand", "5250", 158, 540));
-            productRepository.save(product(categories.get("sport"), "lululemon-align-瑜伽裤", "Lululemon Align 瑜伽裤", "Lululemon Align 瑜伽裤", "Brand", "633.8", 84, 385));
-            productRepository.save(product(categories.get("sport"), "keep-瑜伽垫-tpe", "Keep 瑜伽垫 TPE", "Keep 瑜伽垫 TPE", "Brand", "5648.8", 50, 485));
-            productRepository.save(product(categories.get("sport"), "nike-pro-运动内衣", "Nike Pro 运动内衣", "Nike Pro 运动内衣", "Brand", "2236.9", 22, 79));
-            productRepository.save(product(categories.get("sport"), "迪卡侬-mh500-登山包", "迪卡侬 MH500 登山包", "迪卡侬 MH500 登山包", "Brand", "1765.8", 13, 27));
-            productRepository.save(product(categories.get("sport"), "the-north-face-羽绒服-96nuptse", "The North Face 羽绒服 96Nuptse", "The North Face 羽绒服 96Nuptse", "Brand", "3081", 23, 170));
-            productRepository.save(product(categories.get("sport"), "骆驼-露营帐篷-3-4人", "骆驼 露营帐篷 3-4人", "骆驼 露营帐篷 3-4人", "Brand", "3037", 40, 132));
-            productRepository.save(product(categories.get("sport"), "yeti-rambler-水壶-769ml", "YETI Rambler 水壶 769ml", "YETI Rambler 水壶 769ml", "Brand", "5256.9", 168, 408));
-            productRepository.save(product(categories.get("sport"), "peloton-bike-健身车", "Peloton Bike+ 健身车", "Peloton Bike+ 健身车", "Brand", "5137.5", 49, 107));
-            productRepository.save(product(categories.get("sport"), "keep-智能跳绳", "Keep 智能跳绳", "Keep 智能跳绳", "Brand", "876.5", 128, 771));
-            productRepository.save(product(categories.get("sport"), "哑铃套装-20kg-可调节", "哑铃套装 20kg 可调节", "哑铃套装 20kg 可调节", "Brand", "1956.9", 48, 215));
-            productRepository.save(product(categories.get("sport"), "nike-瑜伽训练垫-5mm", "Nike 瑜伽训练垫 5mm", "Nike 瑜伽训练垫 5mm", "Brand", "2419", 143, 409));
-            productRepository.save(product(categories.get("sport"), "garmin-fenix-7x-pro", "Garmin Fenix 7X Pro", "Garmin Fenix 7X Pro", "Brand", "1915.9", 21, 142));
-            productRepository.save(product(categories.get("sport"), "shimano-rc7-骑行锁鞋", "Shimano RC7 骑行锁鞋", "Shimano RC7 骑行锁鞋", "Brand", "618", 114, 730));
-            productRepository.save(product(categories.get("sport"), "speedo-fastskin-泳镜", "Speedo Fastskin 泳镜", "Speedo Fastskin 泳镜", "Brand", "1624.9", 140, 612));
-            productRepository.save(product(categories.get("sport"), "arena-游泳训练脚蹼", "Arena 游泳训练脚蹼", "Arena 游泳训练脚蹼", "Brand", "3011.8", 233, 289));
-            productRepository.save(product(categories.get("sport"), "wilson-nba-篮球", "Wilson NBA 篮球", "Wilson NBA 篮球", "Brand", "5198.8", 146, 284));
-            productRepository.save(product(categories.get("sport"), "yonex-天斧-ax100zz", "Yonex 天斧 AX100ZZ", "Yonex 天斧 AX100ZZ", "Brand", "5199.9", 71, 473));
-            productRepository.save(product(categories.get("sport"), "garmin-edge-540-码表", "Garmin Edge 540 码表", "Garmin Edge 540 码表", "Brand", "694.5", 25, 71));
-            // 美妆个护 (17件)
-            productRepository.save(product(categories.get("beauty"), "兰蔻-极光水-150ml", "兰蔻 极光水 150ml", "兰蔻 极光水 150ml", "Brand", "3796.5", 50, 316));
-            productRepository.save(product(categories.get("beauty"), "sk-ii-神仙水-230ml", "SK-II 神仙水 230ml", "SK-II 神仙水 230ml", "Brand", "2215", 98, 453));
-            productRepository.save(product(categories.get("beauty"), "雅诗兰黛-小棕瓶精华-50ml", "雅诗兰黛 小棕瓶精华 50ml", "雅诗兰黛 小棕瓶精华 50ml", "Brand", "3007.5", 107, 405));
-            productRepository.save(product(categories.get("beauty"), "海蓝之谜-面霜-60ml", "海蓝之谜 面霜 60ml", "海蓝之谜 面霜 60ml", "Brand", "3324", 58, 205));
-            productRepository.save(product(categories.get("beauty"), "olay-小白瓶-40ml", "Olay 小白瓶 40ml", "Olay 小白瓶 40ml", "Brand", "2491", 113, 423));
-            productRepository.save(product(categories.get("beauty"), "珀莱雅-双抗精华-30ml", "珀莱雅 双抗精华 30ml", "珀莱雅 双抗精华 30ml", "Brand", "3490", 101, 529));
-            productRepository.save(product(categories.get("beauty"), "迪奥-口红-999-哑光", "迪奥 口红 999 哑光", "迪奥 口红 999 哑光", "Brand", "415", 176, 800));
-            productRepository.save(product(categories.get("beauty"), "tom-ford-黑金唇膏-16", "Tom Ford 黑金唇膏 16", "Tom Ford 黑金唇膏 16", "Brand", "398.5", 85, 539));
-            productRepository.save(product(categories.get("beauty"), "ysl-小金条-21", "YSL 小金条 #21", "YSL 小金条 #21", "Brand", "1397", 67, 120));
-            productRepository.save(product(categories.get("beauty"), "mac-生姜高光-doublegleam", "MAC 生姜高光 DoubleGleam", "MAC 生姜高光 DoubleGleam", "Brand", "900.9", 71, 383));
-            productRepository.save(product(categories.get("beauty"), "jo-malone-蓝风铃-30ml", "Jo Malone 蓝风铃 30ml", "Jo Malone 蓝风铃 30ml", "Brand", "1157", 54, 440));
-            productRepository.save(product(categories.get("beauty"), "diptyque-檀道-75ml", "Diptyque 檀道 75ml", "Diptyque 檀道 75ml", "Brand", "1750", 109, 265));
-            productRepository.save(product(categories.get("beauty"), "aesop-赋活芳香护手霜-75ml", "Aesop 赋活芳香护手霜 75ml", "Aesop 赋活芳香护手霜 75ml", "Brand", "672.9", 178, 383));
-            productRepository.save(product(categories.get("beauty"), "卡诗-白金赋活洗发水-250ml", "卡诗 白金赋活洗发水 250ml", "卡诗 白金赋活洗发水 250ml", "Brand", "3127.9", 159, 417));
-            productRepository.save(product(categories.get("beauty"), "戴森-supersonic-吹风机", "戴森 Supersonic 吹风机", "戴森 Supersonic 吹风机", "Brand", "3579", 123, 315));
-            productRepository.save(product(categories.get("beauty"), "cerave-保湿洁面乳-473ml", "CeraVe 保湿洁面乳 473ml", "CeraVe 保湿洁面乳 473ml", "Brand", "1158.9", 167, 421));
-            productRepository.save(product(categories.get("beauty"), "修丽可-cf-抗氧化精华-30ml", "修丽可 CF 抗氧化精华 30ml", "修丽可 CF 抗氧化精华 30ml", "Brand", "1858.8", 21, 131));
-            // 食品饮料 (15件)
-            productRepository.save(product(categories.get("food"), "三只松鼠-每日坚果-750g", "三只松鼠 每日坚果 750g", "三只松鼠 每日坚果 750g", "Brand", "1727", 152, 489));
-            productRepository.save(product(categories.get("food"), "良品铺子-猪肉脯-500g", "良品铺子 猪肉脯 500g", "良品铺子 猪肉脯 500g", "Brand", "2881.5", 179, 740));
-            productRepository.save(product(categories.get("food"), "瑞士莲-软心巧克力-600g", "瑞士莲 软心巧克力 600g", "瑞士莲 软心巧克力 600g", "Brand", "2941.8", 316, 996));
-            productRepository.save(product(categories.get("food"), "认养一头牛-纯牛奶-250ml24盒", "认养一头牛 纯牛奶 250ml×24盒", "认养一头牛 纯牛奶 250ml×24盒", "Brand", "2307", 219, 701));
-            productRepository.save(product(categories.get("food"), "北海牧场-酸奶-200g12杯", "北海牧场 酸奶 200g×12杯", "北海牧场 酸奶 200g×12杯", "Brand", "2474", 235, 751));
-            productRepository.save(product(categories.get("food"), "桂格-即食燕麦片-15kg", "桂格 即食燕麦片 1.5kg", "桂格 即食燕麦片 1.5kg", "Brand", "961.5", 246, 592));
-            productRepository.save(product(categories.get("food"), "汤臣倍健-蛋白粉-450g", "汤臣倍健 蛋白粉 450g", "汤臣倍健 蛋白粉 450g", "Brand", "392", 94, 288));
-            productRepository.save(product(categories.get("food"), "东方树叶-茉莉花茶-500ml15", "东方树叶 茉莉花茶 500ml×15", "东方树叶 茉莉花茶 500ml×15", "Brand", "139", 105, 435));
-            productRepository.save(product(categories.get("food"), "农夫山泉-矿泉水-550ml24", "农夫山泉 矿泉水 550ml×24", "农夫山泉 矿泉水 550ml×24", "Brand", "2427.5", 214, 177));
-            productRepository.save(product(categories.get("food"), "青岛啤酒-经典1903-500ml12", "青岛啤酒 经典1903 500ml×12", "青岛啤酒 经典1903 500ml×12", "Brand", "2242", 211, 776));
-            productRepository.save(product(categories.get("food"), "锐澳-微醺鸡尾酒-330ml8", "锐澳 微醺鸡尾酒 330ml×8", "锐澳 微醺鸡尾酒 330ml×8", "Brand", "428.8", 34, 95));
-            productRepository.save(product(categories.get("food"), "茅台-飞天53度-500ml", "茅台 飞天53度 500ml", "茅台 飞天53度 500ml", "Brand", "923", 20, 191));
-            productRepository.save(product(categories.get("food"), "奈雪的茶-茉莉初雪-茶包-15袋", "奈雪的茶 茉莉初雪 茶包 15袋", "奈雪的茶 茉莉初雪 茶包 15袋", "Brand", "1135", 157, 404));
-            productRepository.save(product(categories.get("food"), "小猪呵呵-午餐肉-340g", "小猪呵呵 午餐肉 340g", "小猪呵呵 午餐肉 340g", "Brand", "111.9", 214, 585));
-            productRepository.save(product(categories.get("food"), "沃隆-每日坚果-礼盒装-1kg", "沃隆 每日坚果 礼盒装 1kg", "沃隆 每日坚果 礼盒装 1kg", "Brand", "2628", 112, 863));
+        Set<String> existingProductNames = new HashSet<>();
+        for (Product existingProduct : productRepository.findAll()) {
+            existingProductNames.add(existingProduct.getName());
         }
+        // 手机数码 (38件)
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "iphone-15-pro-max", "iPhone 15 Pro Max", "iPhone 15 Pro Max", "Brand", "7666", 39, 79));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-mate-60-pro", "华为 Mate 60 Pro", "华为 Mate 60 Pro", "Brand", "3923.9", 21, 82));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-14-ultra", "小米 14 Ultra", "小米 14 Ultra", "Brand", "7935", 26, 68));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "oppo-find-x7-ultra", "OPPO Find X7 Ultra", "OPPO Find X7 Ultra", "Brand", "8337.8", 50, 79));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "vivo-x100-pro", "vivo X100 Pro", "vivo X100 Pro", "Brand", "8961.9", 24, 44));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "三星-galaxy-s24-ultra", "三星 Galaxy S24 Ultra", "三星 Galaxy S24 Ultra", "Brand", "8207", 27, 41));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "一加-12", "一加 12", "一加 12", "Brand", "8002", 15, 210));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "荣耀-magic6-pro", "荣耀 Magic6 Pro", "荣耀 Magic6 Pro", "Brand", "4611.8", 36, 92));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "nova-12-ultra", "Nova 12 Ultra", "Nova 12 Ultra", "Brand", "8104", 38, 112));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "airpods-pro-2", "AirPods Pro 2", "AirPods Pro 2", "Brand", "5462", 19, 265));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-freebuds-pro-3", "华为 FreeBuds Pro 3", "华为 FreeBuds Pro 3", "Brand", "563.9", 46, 258));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-buds-4-pro", "小米 Buds 4 Pro", "小米 Buds 4 Pro", "Brand", "1924", 57, 339));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "apple-watch-ultra-2", "Apple Watch Ultra 2", "Apple Watch Ultra 2", "Brand", "8583", 14, 33));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-watch-gt-4", "华为 Watch GT 4", "华为 Watch GT 4", "Brand", "630.9", 31, 314));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米手环-8-pro", "小米手环 8 Pro", "小米手环 8 Pro", "Brand", "1853", 88, 241));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "ipad-air-m2", "iPad Air M2", "iPad Air M2", "Brand", "3819.8", 23, 211));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-matepad-pro-132", "华为 MatePad Pro 13.2", "华为 MatePad Pro 13.2", "Brand", "2818", 30, 107));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米平板-6s-pro", "小米平板 6S Pro", "小米平板 6S Pro", "Brand", "1889", 31, 92));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "anker-65w-氮化镓充电器", "ANKER 65W 氮化镓充电器", "ANKER 65W 氮化镓充电器", "Brand", "2031", 51, 173));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "闪迪-256gb-tf-存储卡", "闪迪 256GB TF 存储卡", "闪迪 256GB TF 存储卡", "Brand", "8528.5", 125, 758));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "sony-wh-1000xm5", "Sony WH-1000XM5", "Sony WH-1000XM5", "Brand", "3108.5", 17, 198));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "bose-qc-ultra", "Bose QC Ultra", "Bose QC Ultra", "Brand", "7275.5", 30, 188));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "jbl-flip-6", "JBL Flip 6", "JBL Flip 6", "Brand", "3344.9", 22, 267));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "kindle-paperwhite-5", "Kindle Paperwhite 5", "Kindle Paperwhite 5", "Brand", "8884.9", 116, 200));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "gopro-hero-12-black", "GoPro Hero 12 Black", "GoPro Hero 12 Black", "Brand", "6981", 38, 384));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "insta360-x4", "Insta360 X4", "Insta360 X4", "Brand", "8694.9", 20, 257));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "macbook-pro-14-m3", "MacBook Pro 14 M3", "MacBook Pro 14 M3", "Brand", "6675", 18, 29));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-matebook-x-pro-2024", "华为 MateBook X Pro 2024", "华为 MateBook X Pro 2024", "Brand", "3942.5", 11, 137));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-book-pro-16", "小米 Book Pro 16", "小米 Book Pro 16", "Brand", "1079", 11, 95));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "samsung-viewfinity-s9", "Samsung ViewFinity S9", "Samsung ViewFinity S9", "Brand", "8180.9", 28, 54));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "罗技-g-pro-x-耳机", "罗技 G Pro X 耳机", "罗技 G Pro X 耳机", "Brand", "1182.9", 49, 177));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "samsung-t7-shield-2tb", "Samsung T7 Shield 2TB", "Samsung T7 Shield 2TB", "Brand", "4030.9", 114, 447));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "华为-ax6", "华为 AX6", "华为 AX6", "Brand", "1452.9", 119, 454));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-扫拖机器人-x20", "小米 扫拖机器人 X20+", "小米 扫拖机器人 X20+", "Brand", "4696", 37, 88));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "bose-soundlink-max", "Bose SoundLink Max", "Bose SoundLink Max", "Brand", "523", 148, 481));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-空气净化器-4-pro", "小米 空气净化器 4 Pro", "小米 空气净化器 4 Pro", "Brand", "2568", 15, 139));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-电热水壶-2", "小米 电热水壶 2", "小米 电热水壶 2", "Brand", "3022.9", 74, 416));
+        saveSeedProduct(existingProductNames, product(categories.get("phone"), "小米-走步机-c2", "小米 走步机 C2", "小米 走步机 C2", "Brand", "208", 81, 182));
+        // 电脑办公 (19件)
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "绿联-手机支架-桌面", "绿联 手机支架 桌面", "绿联 手机支架 桌面", "Brand", "5349.5", 72, 149));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "thinkpad-x1-carbon-gen-12", "ThinkPad X1 Carbon Gen 12", "ThinkPad X1 Carbon Gen 12", "Brand", "12001.8", 8, 38));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "华硕-rog-枪神8", "华硕 ROG 枪神8", "华硕 ROG 枪神8", "Brand", "14171.9", 36, 40));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "dell-u2724d", "Dell U2724D", "Dell U2724D", "Brand", "2685.5", 30, 263));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "lg-27gr95um", "LG 27GR95UM", "LG 27GR95UM", "Brand", "2543", 26, 111));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "logitech-mx-master-3s", "Logitech MX Master 3S", "Logitech MX Master 3S", "Brand", "10016", 87, 151));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "keychron-q1-pro", "Keychron Q1 Pro", "Keychron Q1 Pro", "Brand", "10507.5", 54, 177));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "cherry-mx-board-30s", "Cherry MX Board 3.0S", "Cherry MX Board 3.0S", "Brand", "4928.9", 132, 135));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "blue-yeti-x-usb-麦克风", "Blue Yeti X USB 麦克风", "Blue Yeti X USB 麦克风", "Brand", "14301.8", 37, 286));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "wd-my-book-12tb", "WD My Book 12TB", "WD My Book 12TB", "Brand", "14991", 116, 414));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "tp-link-axe5400", "TP-Link AXE5400", "TP-Link AXE5400", "Brand", "2966.5", 140, 453));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "明基-screenbar-halo", "明基 ScreenBar Halo", "明基 ScreenBar Halo", "Brand", "8240.9", 139, 205));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "爱格升-lx-显示器支架", "爱格升 LX 显示器支架", "爱格升 LX 显示器支架", "Brand", "11830", 168, 288));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "herman-miller-aeron", "Herman Miller Aeron", "Herman Miller Aeron", "Brand", "14956.9", 20, 39));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "网易严选-人体工学椅", "网易严选 人体工学椅", "网易严选 人体工学椅", "Brand", "7472", 23, 136));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "wacom-intuos-pro-m", "Wacom Intuos Pro M", "Wacom Intuos Pro M", "Brand", "7162", 51, 187));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "apc-back-ups-650", "APC Back-UPS 650", "APC Back-UPS 650", "Brand", "1866", 181, 629));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "绿联-雷电4-扩展坞", "绿联 雷电4 扩展坞", "绿联 雷电4 扩展坞", "Brand", "10540", 88, 223));
+        saveSeedProduct(existingProductNames, product(categories.get("computer"), "微软-surface-pro-10", "微软 Surface Pro 10", "微软 Surface Pro 10", "Brand", "4410.9", 12, 146));
+        // 家居生活 (33件)
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "大疆-osmo-mobile-6", "大疆 Osmo Mobile 6", "大疆 Osmo Mobile 6", "Brand", "4457.9", 38, 96));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "雷蛇-deathadder-v3-pro", "雷蛇 DeathAdder V3 Pro", "雷蛇 DeathAdder V3 Pro", "Brand", "997.8", 110, 110));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "群晖-ds224", "群晖 DS224+", "群晖 DS224+", "Brand", "153.8", 15, 58));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "罗技-streamcam", "罗技 StreamCam", "罗技 StreamCam", "Brand", "2118.5", 114, 170));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "戴森-v15-detect", "戴森 V15 Detect", "戴森 V15 Detect", "Brand", "3893.5", 16, 190));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "戴森-airwrap-hs05", "戴森 Airwrap HS05", "戴森 Airwrap HS05", "Brand", "3185.8", 29, 56));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "飞利浦-空气炸锅-hd9651", "飞利浦 空气炸锅 HD9651", "飞利浦 空气炸锅 HD9651", "Brand", "579.5", 87, 141));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "德龙-ecam23460-全自动咖啡机", "德龙 ECAM23.460 全自动咖啡机", "德龙 ECAM23.460 全自动咖啡机", "Brand", "3517.8", 43, 270));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "松下-sr-hbc184-电饭煲", "松下 SR-HBC184 电饭煲", "松下 SR-HBC184 电饭煲", "Brand", "1369.9", 34, 142));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "九阳-dj13b-d08ec-豆浆机", "九阳 DJ13B-D08EC 豆浆机", "九阳 DJ13B-D08EC 豆浆机", "Brand", "957", 59, 91));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "戴森-pure-cool-空气净化风扇", "戴森 Pure Cool 空气净化风扇", "戴森 Pure Cool 空气净化风扇", "Brand", "444.9", 28, 277));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "aqara-智能窗帘电机-c3", "Aqara 智能窗帘电机 C3", "Aqara 智能窗帘电机 C3", "Brand", "4101", 97, 390));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "yeelight-智能吸顶灯-pro", "Yeelight 智能吸顶灯 Pro", "Yeelight 智能吸顶灯 Pro", "Brand", "1192.5", 50, 82));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "德业-dyd-t22a3-除湿机", "德业 DYD-T22A3 除湿机", "德业 DYD-T22A3 除湿机", "Brand", "3024", 114, 323));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "muji-超声波香薰机", "MUJI 超声波香薰机", "MUJI 超声波香薰机", "Brand", "4839.5", 173, 381));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "象印-sm-sg48-保温杯", "象印 SM-SG48 保温杯", "象印 SM-SG48 保温杯", "Brand", "4847.5", 19, 234));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "水星家纺-95鹅绒被", "水星家纺 95鹅绒被", "水星家纺 95鹅绒被", "Brand", "2211.9", 81, 647));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "天堂-晴雨伞-三折", "天堂 晴雨伞 三折", "天堂 晴雨伞 三折", "Brand", "4657.5", 93, 421));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "3m-净水器-sdw8000", "3M 净水器 SDW8000", "3M 净水器 SDW8000", "Brand", "2079.9", 89, 106));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "bruno-多功能料理锅", "Bruno 多功能料理锅", "Bruno 多功能料理锅", "Brand", "2228", 88, 521));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "美的-m1-l213c-微波炉", "美的 M1-L213C 微波炉", "美的 M1-L213C 微波炉", "Brand", "3817", 35, 165));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "安踏-c37-50-休闲鞋", "安踏 C37 5.0 休闲鞋", "安踏 C37 5.0 休闲鞋", "Brand", "4148.5", 147, 80));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "stanley-户外保温箱-15l", "Stanley 户外保温箱 15L", "Stanley 户外保温箱 15L", "Brand", "2636", 99, 478));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "佳明-forerunner-265", "佳明 Forerunner 265", "佳明 Forerunner 265", "Brand", "2382.9", 77, 470));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "崔克-domane-al-4", "崔克 Domane AL 4", "崔克 Domane AL 4", "Brand", "1787.9", 40, 65));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "charlotte-tilbury-枕边话", "Charlotte Tilbury 枕边话", "Charlotte Tilbury 枕边话", "Brand", "2252", 220, 455));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "潘海利根-兽首狐狸-75ml", "潘海利根 兽首狐狸 75ml", "潘海利根 兽首狐狸 75ml", "Brand", "2643.5", 52, 339));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "marvis-牙膏套装-7支", "Marvis 牙膏套装 7支", "Marvis 牙膏套装 7支", "Brand", "321.9", 192, 402));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "illy-深度烘焙咖啡粉-250g", "illy 深度烘焙咖啡粉 250g", "illy 深度烘焙咖啡粉 250g", "Brand", "517", 176, 153));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "瑞幸-冻干咖啡粉-12颗", "瑞幸 冻干咖啡粉 12颗", "瑞幸 冻干咖啡粉 12颗", "Brand", "2715.9", 250, 1190));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "永璞-闪萃咖啡液-14杯", "永璞 闪萃咖啡液 14杯", "永璞 闪萃咖啡液 14杯", "Brand", "4621", 224, 498));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "安佳-全脂奶粉-1kg", "安佳 全脂奶粉 1kg", "安佳 全脂奶粉 1kg", "Brand", "2270.9", 196, 282));
+        saveSeedProduct(existingProductNames, product(categories.get("home"), "奔富-bin-389-干红-750ml", "奔富 Bin 389 干红 750ml", "奔富 Bin 389 干红 750ml", "Brand", "3845.5", 22, 214));
+        // 运动户外 (21件)
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "nike-air-zoom-pegasus-40", "Nike Air Zoom Pegasus 40", "Nike Air Zoom Pegasus 40", "Brand", "2054", 100, 85));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "adidas-ultraboost-light", "Adidas Ultraboost Light", "Adidas Ultraboost Light", "Brand", "6186.9", 89, 350));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "李宁-超轻21-跑鞋", "李宁 超轻21 跑鞋", "李宁 超轻21 跑鞋", "Brand", "5250", 158, 540));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "lululemon-align-瑜伽裤", "Lululemon Align 瑜伽裤", "Lululemon Align 瑜伽裤", "Brand", "633.8", 84, 385));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "keep-瑜伽垫-tpe", "Keep 瑜伽垫 TPE", "Keep 瑜伽垫 TPE", "Brand", "5648.8", 50, 485));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "nike-pro-运动内衣", "Nike Pro 运动内衣", "Nike Pro 运动内衣", "Brand", "2236.9", 22, 79));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "迪卡侬-mh500-登山包", "迪卡侬 MH500 登山包", "迪卡侬 MH500 登山包", "Brand", "1765.8", 13, 27));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "the-north-face-羽绒服-96nuptse", "The North Face 羽绒服 96Nuptse", "The North Face 羽绒服 96Nuptse", "Brand", "3081", 23, 170));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "骆驼-露营帐篷-3-4人", "骆驼 露营帐篷 3-4人", "骆驼 露营帐篷 3-4人", "Brand", "3037", 40, 132));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "yeti-rambler-水壶-769ml", "YETI Rambler 水壶 769ml", "YETI Rambler 水壶 769ml", "Brand", "5256.9", 168, 408));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "peloton-bike-健身车", "Peloton Bike+ 健身车", "Peloton Bike+ 健身车", "Brand", "5137.5", 49, 107));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "keep-智能跳绳", "Keep 智能跳绳", "Keep 智能跳绳", "Brand", "876.5", 128, 771));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "哑铃套装-20kg-可调节", "哑铃套装 20kg 可调节", "哑铃套装 20kg 可调节", "Brand", "1956.9", 48, 215));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "nike-瑜伽训练垫-5mm", "Nike 瑜伽训练垫 5mm", "Nike 瑜伽训练垫 5mm", "Brand", "2419", 143, 409));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "garmin-fenix-7x-pro", "Garmin Fenix 7X Pro", "Garmin Fenix 7X Pro", "Brand", "1915.9", 21, 142));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "shimano-rc7-骑行锁鞋", "Shimano RC7 骑行锁鞋", "Shimano RC7 骑行锁鞋", "Brand", "618", 114, 730));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "speedo-fastskin-泳镜", "Speedo Fastskin 泳镜", "Speedo Fastskin 泳镜", "Brand", "1624.9", 140, 612));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "arena-游泳训练脚蹼", "Arena 游泳训练脚蹼", "Arena 游泳训练脚蹼", "Brand", "3011.8", 233, 289));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "wilson-nba-篮球", "Wilson NBA 篮球", "Wilson NBA 篮球", "Brand", "5198.8", 146, 284));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "yonex-天斧-ax100zz", "Yonex 天斧 AX100ZZ", "Yonex 天斧 AX100ZZ", "Brand", "5199.9", 71, 473));
+        saveSeedProduct(existingProductNames, product(categories.get("sport"), "garmin-edge-540-码表", "Garmin Edge 540 码表", "Garmin Edge 540 码表", "Brand", "694.5", 25, 71));
+        // 美妆个护 (17件)
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "兰蔻-极光水-150ml", "兰蔻 极光水 150ml", "兰蔻 极光水 150ml", "Brand", "3796.5", 50, 316));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "sk-ii-神仙水-230ml", "SK-II 神仙水 230ml", "SK-II 神仙水 230ml", "Brand", "2215", 98, 453));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "雅诗兰黛-小棕瓶精华-50ml", "雅诗兰黛 小棕瓶精华 50ml", "雅诗兰黛 小棕瓶精华 50ml", "Brand", "3007.5", 107, 405));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "海蓝之谜-面霜-60ml", "海蓝之谜 面霜 60ml", "海蓝之谜 面霜 60ml", "Brand", "3324", 58, 205));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "olay-小白瓶-40ml", "Olay 小白瓶 40ml", "Olay 小白瓶 40ml", "Brand", "2491", 113, 423));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "珀莱雅-双抗精华-30ml", "珀莱雅 双抗精华 30ml", "珀莱雅 双抗精华 30ml", "Brand", "3490", 101, 529));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "迪奥-口红-999-哑光", "迪奥 口红 999 哑光", "迪奥 口红 999 哑光", "Brand", "415", 176, 800));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "tom-ford-黑金唇膏-16", "Tom Ford 黑金唇膏 16", "Tom Ford 黑金唇膏 16", "Brand", "398.5", 85, 539));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "ysl-小金条-21", "YSL 小金条 #21", "YSL 小金条 #21", "Brand", "1397", 67, 120));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "mac-生姜高光-doublegleam", "MAC 生姜高光 DoubleGleam", "MAC 生姜高光 DoubleGleam", "Brand", "900.9", 71, 383));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "jo-malone-蓝风铃-30ml", "Jo Malone 蓝风铃 30ml", "Jo Malone 蓝风铃 30ml", "Brand", "1157", 54, 440));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "diptyque-檀道-75ml", "Diptyque 檀道 75ml", "Diptyque 檀道 75ml", "Brand", "1750", 109, 265));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "aesop-赋活芳香护手霜-75ml", "Aesop 赋活芳香护手霜 75ml", "Aesop 赋活芳香护手霜 75ml", "Brand", "672.9", 178, 383));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "卡诗-白金赋活洗发水-250ml", "卡诗 白金赋活洗发水 250ml", "卡诗 白金赋活洗发水 250ml", "Brand", "3127.9", 159, 417));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "戴森-supersonic-吹风机", "戴森 Supersonic 吹风机", "戴森 Supersonic 吹风机", "Brand", "3579", 123, 315));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "cerave-保湿洁面乳-473ml", "CeraVe 保湿洁面乳 473ml", "CeraVe 保湿洁面乳 473ml", "Brand", "1158.9", 167, 421));
+        saveSeedProduct(existingProductNames, product(categories.get("beauty"), "修丽可-cf-抗氧化精华-30ml", "修丽可 CF 抗氧化精华 30ml", "修丽可 CF 抗氧化精华 30ml", "Brand", "1858.8", 21, 131));
+        // 食品饮料 (15件)
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "三只松鼠-每日坚果-750g", "三只松鼠 每日坚果 750g", "三只松鼠 每日坚果 750g", "Brand", "1727", 152, 489));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "良品铺子-猪肉脯-500g", "良品铺子 猪肉脯 500g", "良品铺子 猪肉脯 500g", "Brand", "2881.5", 179, 740));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "瑞士莲-软心巧克力-600g", "瑞士莲 软心巧克力 600g", "瑞士莲 软心巧克力 600g", "Brand", "2941.8", 316, 996));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "认养一头牛-纯牛奶-250ml24盒", "认养一头牛 纯牛奶 250ml×24盒", "认养一头牛 纯牛奶 250ml×24盒", "Brand", "2307", 219, 701));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "北海牧场-酸奶-200g12杯", "北海牧场 酸奶 200g×12杯", "北海牧场 酸奶 200g×12杯", "Brand", "2474", 235, 751));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "桂格-即食燕麦片-15kg", "桂格 即食燕麦片 1.5kg", "桂格 即食燕麦片 1.5kg", "Brand", "961.5", 246, 592));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "汤臣倍健-蛋白粉-450g", "汤臣倍健 蛋白粉 450g", "汤臣倍健 蛋白粉 450g", "Brand", "392", 94, 288));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "东方树叶-茉莉花茶-500ml15", "东方树叶 茉莉花茶 500ml×15", "东方树叶 茉莉花茶 500ml×15", "Brand", "139", 105, 435));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "农夫山泉-矿泉水-550ml24", "农夫山泉 矿泉水 550ml×24", "农夫山泉 矿泉水 550ml×24", "Brand", "2427.5", 214, 177));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "青岛啤酒-经典1903-500ml12", "青岛啤酒 经典1903 500ml×12", "青岛啤酒 经典1903 500ml×12", "Brand", "2242", 211, 776));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "锐澳-微醺鸡尾酒-330ml8", "锐澳 微醺鸡尾酒 330ml×8", "锐澳 微醺鸡尾酒 330ml×8", "Brand", "428.8", 34, 95));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "茅台-飞天53度-500ml", "茅台 飞天53度 500ml", "茅台 飞天53度 500ml", "Brand", "923", 20, 191));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "奈雪的茶-茉莉初雪-茶包-15袋", "奈雪的茶 茉莉初雪 茶包 15袋", "奈雪的茶 茉莉初雪 茶包 15袋", "Brand", "1135", 157, 404));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "小猪呵呵-午餐肉-340g", "小猪呵呵 午餐肉 340g", "小猪呵呵 午餐肉 340g", "Brand", "111.9", 214, 585));
+        saveSeedProduct(existingProductNames, product(categories.get("food"), "沃隆-每日坚果-礼盒装-1kg", "沃隆 每日坚果 礼盒装 1kg", "沃隆 每日坚果 礼盒装 1kg", "Brand", "2628", 112, 863));
         List<Product> products = productRepository.findAll();
+        for (Product product : products) {
+            String configuredImage = IMG.get(product.getName());
+            if (configuredImage != null && !configuredImage.isBlank()
+                    && !configuredImage.equals(product.getImageUrl())) {
+                productRepository.updateImageUrlById(product.getId(), configuredImage);
+                product.updateImageUrl(configuredImage);
+            }
+        }
         Map<String, Product> prodMap = new LinkedHashMap<>();
         for (Product p : products) prodMap.put(p.getName(), p);
         return prodMap;
     }
 
-    private void seedBehaviors(Map<String, User> users, Map<String, Product> products) {
+    private void saveSeedProduct(Set<String> existingProductNames, Product product) {
+        if (existingProductNames.add(product.getName())) {
+            productRepository.save(product);
+        }
+    }
+
+    private void seedBehaviors(Map<String, User> users, Map<String, Product> products,
+                               Map<String, Category> categories) {
         if (userBehaviorRepository.count() > 0) return;
 
-        List<Product> phone=products.values().stream().filter(p->p.getCategoryId()==1).toList();
-        List<Product> comp=products.values().stream().filter(p->p.getCategoryId()==2).toList();
-        List<Product> home=products.values().stream().filter(p->p.getCategoryId()==3).toList();
-        List<Product> sport=products.values().stream().filter(p->p.getCategoryId()==4).toList();
-        List<Product> beauty=products.values().stream().filter(p->p.getCategoryId()==5).toList();
-        List<Product> food=products.values().stream().filter(p->p.getCategoryId()==6).toList();
+        List<Product> phone = productsInCategory(products, categories.get("phone"));
+        List<Product> comp = productsInCategory(products, categories.get("computer"));
+        List<Product> home = productsInCategory(products, categories.get("home"));
+        List<Product> sport = productsInCategory(products, categories.get("sport"));
+        List<Product> beauty = productsInCategory(products, categories.get("beauty"));
+        List<Product> food = productsInCategory(products, categories.get("food"));
 
         var rng = new java.util.Random(42);
 
@@ -447,6 +447,12 @@ public class DataInitializer implements CommandLineRunner {
         behaveCross(users.get("eve"), 20, phone, sport, rng);
         // frank: 电脑60%+家居40%（连接 bob ↔ carol）
         behaveCross(users.get("frank"), 20, comp, home, rng);
+    }
+
+    private List<Product> productsInCategory(Map<String, Product> products, Category category) {
+        return products.values().stream()
+                .filter(product -> Objects.equals(product.getCategoryId(), category.getId()))
+                .toList();
     }
 
     private void behave(User user, int count, List<Product> main, List<Product> alt1,
@@ -482,13 +488,6 @@ public class DataInitializer implements CommandLineRunner {
         return new Product(category.getId(), name, description, brand, new BigDecimal(price), stock,
                 img,
                 ProductStatus.ON_SALE, salesCount);
-    }
-
-    private Category findCategory(List<Category> categories, String name) {
-        return categories.stream()
-                .filter(category -> name.equals(category.getName()))
-                .findFirst()
-                .orElseThrow();
     }
 
     private Product findProduct(List<Product> products, String name) {

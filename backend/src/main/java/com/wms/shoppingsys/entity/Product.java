@@ -105,6 +105,10 @@ public class Product {
         this.salesCount = salesCount;
     }
 
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     public void markOnSale() {
         this.status = ProductStatus.ON_SALE;
     }
