@@ -40,3 +40,4 @@ backend/src/main/resources/application-mysql.properties
 crawler/
 *.ipynb_checkpoints
 static/
+static/

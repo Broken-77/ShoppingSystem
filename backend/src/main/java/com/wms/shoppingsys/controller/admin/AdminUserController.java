@@ -48,7 +48,9 @@ public class AdminUserController {
     @GetMapping("/profiles")
     public ApiResponse<List<UserDtos.UserProfile>> profiles(HttpServletRequest request) {
         authService.requireAdmin(currentUser(request));
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != com.wms.shoppingsys.enums.UserRole.ADMIN)
+                .collect(Collectors.toList());
         List<UserDtos.UserProfile> profiles = new ArrayList<>();
 
         // 先为每个用户计算品类兴趣
